@@ -9,7 +9,7 @@ from .permissions import requer_homologador
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
-@login_required
+#@login_required
 def novo_fo():
     if request.method == "POST":
         militar_id = request.form.get("militar_id", type=int)
@@ -29,13 +29,13 @@ def novo_fo():
         )
 
         flash("FO registrado com sucesso e enviado para homologação.", "success")
-        return redirect(url_for("fo.lista_fo"))
+        return redirect(url_for("fo.novo_fo"))
 
     tipos = TipoDeFato.query.filter_by(ativo=True).order_by(TipoDeFato.nome).all()
     return render_template("fo/lancar_fo.html", tipos=tipos)
 
 @fo_bp.route("/api/militares")
-@login_required
+#@login_required
 def api_buscar_militares():
     termo = request.args.get("q", "").strip()
 
@@ -62,7 +62,7 @@ def api_buscar_militares():
     ])
 
 @fo_bp.route("/api/tipos/<int:tipo_id>")
-@login_required
+#@login_required
 def api_tipo_fato(tipo_id):
     tipo = TipoDeFato.query.filter_by(id=tipo_id, ativo=True).first_or_404()
     
@@ -74,7 +74,7 @@ def api_tipo_fato(tipo_id):
     })
 
 @fo_bp.route("/homologacao")
-@login_required
+#@login_required
 @requer_homologador
 def homologacao():
     fatos = FatoObservado.query.filter_by(status="Pendente")\
@@ -90,7 +90,7 @@ def homologacao():
     )
 
 @fo_bp.route("/homologacao/<int:fato_id>/aprovar", methods=["POST"])
-@login_required
+#@login_required
 @requer_homologador
 def aprovar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
@@ -103,7 +103,7 @@ def aprovar(fato_id):
     return redirect(url_for("fo.homologacao"))
 
 @fo_bp.route("/homologacao/<int:fato_id>/recusar", methods=["POST"])
-@login_required
+#@login_required
 @requer_homologador
 def recusar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
@@ -118,7 +118,7 @@ def recusar(fato_id):
     return redirect(url_for("fo.homologacao"))
 
 @fo_bp.route("/homologacao/<int:fato_id>/editar", methods=["GET", "POST"])
-@login_required
+#@login_required
 @requer_homologador
 def editar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
@@ -132,7 +132,7 @@ def editar(fato_id):
     return render_template("fo/editar_fo.html", fato=fato)
 
 @fo_bp.route("/ranking")
-@login_required
+#@login_required
 def ranking():
     periodo = request.args.get("periodo", "mes")
     secao_id = request.args.get("secao_id", type=int)
@@ -161,7 +161,7 @@ def ranking():
     )
 
     if secao_id:
-        query = query.filter(Militar.secao_id == secao_id)
+        query = query.filter(Militar.id_secao == secao_id)
     
     query = query.group_by(
         Militar.id,

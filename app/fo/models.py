@@ -45,7 +45,7 @@ class Usuario(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     senha_hash = db.Column(db.String(128), nullable=False)
-    nivel_permissao = db.Column(db.String(20), nullable=False) # "Cadastrador", "Homologador", "Administrador"
+    nivel_permissao = db.Column(db.Integer, default=1, nullable=False) # "Cadastrador", "Homologador", "Administrador"
 
     militar_id = db.Column(
         db.Integer,

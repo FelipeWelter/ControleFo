@@ -54,7 +54,7 @@ def criar_fato_observado(usuario_logado, militar_alvo, tipo_fato, descricao, arq
     fato = FatoObservado(
         militar_id=militar_alvo.id,
         cadastrador_id=usuario_logado.id,
-        tipo_fato_id=tipo_fato.id,
+        tipo_de_fato_id=tipo_fato.id,
         sinal=tipo_fato.sinal,
         pontos=tipo_fato.pontos,
         descricao=descricao.strip(),

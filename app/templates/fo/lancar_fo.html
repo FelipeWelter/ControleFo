@@ -1,0 +1,146 @@
+{% extends "fo/base.html" %}
+{% block title %}Lançar FO{% endblock %}
+
+{% block content %}
+
+<div class="card-glass p-4" id="fo-card">
+
+    <h2 class="mb-4">Lançamento de Fato Observado</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label class="form-label">Buscar Militar</label>
+            <input
+                type="text"
+                class="form-control"
+                id="busca-militar"
+                placeholder="Digite o nome ou identidade do militar"
+            >
+
+            <input type="hidden" id="militar_id" name="militar_id">
+
+            <div id="resultado-busca" class="list-group mt-2"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Tipo de Fato</label>
+            <select name="tipo_fato_id" id="tipo_fato_id" class="form-select" required>
+                <option value="">Selecione...</option>
+
+                {% for tipo in tipos %}
+                    <option value="{{ tipo.id }}">
+                        {{ tipo.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Pontuação</label>
+
+            <input
+                type="text"
+                class="form-control"
+                id="pontuacao"
+                readonly
+            >
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Descrição</label>
+
+            <textarea
+                class="form-control"
+                name="descricao"
+                rows="5"
+                maxlength="1000"
+                required
+            ></textarea>
+        </div>
+    
+        <div class="mb-4">
+            <label class="form-label">Evidências</label>
+            <input
+                type="file"
+                class="form-control"
+                name="evidencias"
+                multiple
+                accept=".jpg,.jpeg,.png,.pdf"
+            >
+        </div>
+
+        <button class="btn btn-primary w-100">
+            Registrar Fato Observado
+        </button>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+
+<script>
+
+const buscaInput = document.getElementById("busca-militar");
+const resultadoBusca = document.getElementById("resultado-busca");
+const militarIdInput = document.getElementById("militar_id");
+const tipoSelect = document.getElementById("tipo_fato_id");
+const pontuacaoInput = document.getElementById("pontuacao");
+const foCard = document.getElementById("fo-card");
+
+buscaInput.addEventListener("input", async () => {
+    const termo = buscaInput.value;
+
+    if(termo.length < 2){
+        resultadoBusca.innerHTML = "";
+        return;
+    }
+
+    const response = await fetch(`/fo/api/militares?q=${termo}`);
+    const militares = await response.json();
+
+    resultadoBusca.innerHTML = "";
+    militares.forEach(militar => {
+        const item = document.createElement("button");
+
+        item.type = "button";
+        item.classList.add("list-group-item", "list-group-item-action");
+        item.innerHTML = `
+            <strong>${militar.posto_graduacao} ${militar.nome_guerra}</strong><br>
+            <small>${militar.identidade_militar} - ${militar.secao}</small>
+        `;
+
+        item.onclick = () => {
+            militarIdInput.value = militar.id;
+            buscaInput.value = `${militar.posto_graduacao} ${militar.nome_guerra}`;
+            resultadoBusca.innerHTML = "";
+        };
+
+        resultadoBusca.appendChild(item);
+    
+    });
+});
+
+tipoSelect.addEventListener("change", async () => {
+    const tipoId = tipoSelect.value;
+
+    if(!tipoId){
+        pontuacaoInput.value = "";
+        return;
+    }
+
+    const response = await fetch(`/fo/api/tipos/${tipoId}`);
+    const tipo = await response.json();
+
+    pontuacaoInput.value = tipo.pontos;
+
+    foCard.classList.remove("positivo", "negativo");
+    if(tipo.sinal === "POSITIVO") {
+        foCard.classList.add("positivo");
+    } else {
+        foCard.classList.add("negativo");
+    }
+});
+
+</script>
+
+{% endblock %}

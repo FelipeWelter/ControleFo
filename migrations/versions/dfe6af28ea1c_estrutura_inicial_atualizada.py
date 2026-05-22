@@ -1,8 +1,8 @@
-"""estrutura inicial do sistema
+"""estrutura inicial atualizada
 
-Revision ID: cde5df87e24f
+Revision ID: dfe6af28ea1c
 Revises: 
-Create Date: 2026-05-22 09:04:50.148007
+Create Date: 2026-05-22 10:13:10.634506
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'cde5df87e24f'
+revision = 'dfe6af28ea1c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -53,7 +53,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=80), nullable=False),
     sa.Column('senha_hash', sa.String(length=128), nullable=False),
-    sa.Column('nivel_permissao', sa.String(length=20), nullable=False),
+    sa.Column('nivel_permissao', sa.Integer(), nullable=False),
     sa.Column('militar_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['militar_id'], ['militares.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id'),
