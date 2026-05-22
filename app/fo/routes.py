@@ -5,7 +5,7 @@ from app.extensions import db
 from app.fo.models import Militar
 from . import fo_bp
 from .models import TipoDeFato, FatoObservado
-from .permissions import requer_homologacao
+from .permissions import requer_homologador
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
@@ -75,7 +75,7 @@ def api_tipo_fato(tipo_id):
 
 @fo_bp.route("/homologacao")
 @login_required
-@requer_homologacao
+@requer_homologador
 def homologacao():
     fatos = FatoObservado.query.filter_by(status="Pendente")\
         .order_by(FatoObservado.data_registro.desc())\
@@ -91,7 +91,7 @@ def homologacao():
 
 @fo_bp.route("/homologacao/<int:fato_id>/aprovar", methods=["POST"])
 @login_required
-@requer_homologacao
+@requer_homologador
 def aprovar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
 
@@ -104,7 +104,7 @@ def aprovar(fato_id):
 
 @fo_bp.route("/homologacao/<int:fato_id>/recusar", methods=["POST"])
 @login_required
-@requer_homologacao
+@requer_homologador
 def recusar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
 
@@ -119,7 +119,7 @@ def recusar(fato_id):
 
 @fo_bp.route("/homologacao/<int:fato_id>/editar", methods=["GET", "POST"])
 @login_required
-@requer_homologacao
+@requer_homologador
 def editar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
 

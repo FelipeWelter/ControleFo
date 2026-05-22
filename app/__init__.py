@@ -1,6 +1,7 @@
 from flask import Flask
 from config import Config
 from app.extensions import db, login_manager, migrate
+from app.fo.models import Militar, PostoGraduacao, Secao, Usuario, TipoDeFato
 
 
 def create_app():
