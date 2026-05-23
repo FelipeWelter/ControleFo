@@ -73,6 +73,14 @@
 
             <ul class="navbar-nav me-auto">
 
+                {% if current_user.perfil in ["MILITAR", "ADMIN"] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.meu_historico') }}">
+                            Meu Histórico
+                        </a>
+                    </li>
+                {% endif %}
+
                 {% if current_user.perfil in ["HOMOLOGADOR", "ADMIN"] %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('fo.novo_fo') }}">

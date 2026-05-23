@@ -487,3 +487,34 @@ def admin_usuario_editar(usuario_id):
         usuario=usuario,
         militares=militares
     )
+
+@fo_bp.route("/meu-historico")
+@login_required
+def meu_historico():
+    if not current_user.militar_id:
+        flash("Seu usuário não está vinculado a um militar.", "warning")
+        return redirect(url_for("auth.logout"))
+
+    fatos = FatoObservado.query.filter_by(
+        militar_id=current_user.militar_id,
+        status="Publicado"
+    ).order_by(
+        FatoObservado.data_registro.desc()
+    ).all()
+
+    positivos = [f for f in fatos if f.sinal == "POSITIVO"]
+    negativos = [f for f in fatos if f.sinal == "NEGATIVO"]
+
+    total_positivo = sum(f.pontos for f in positivos)
+    total_negativo = sum(f.pontos for f in negativos)
+    saldo = total_positivo - total_negativo
+
+    return render_template(
+        "fo/meu_historico.html",
+        fatos=fatos,
+        positivos=positivos,
+        negativos=negativos,
+        total_positivo=total_positivo,
+        total_negativo=total_negativo,
+        saldo=saldo
+    )

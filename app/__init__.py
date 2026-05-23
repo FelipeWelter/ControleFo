@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for
 from config import Config
 from app.extensions import db, login_manager, migrate
+from flask_login import current_user
 
 
 
@@ -28,6 +29,9 @@ def create_app():
 
     @app.route("/")
     def index():
+        if current_user.is_authenticated and current_user.perfil == "MILITAR":
+            return redirect(url_for("fo.meu_historico"))
+
         return redirect(url_for("fo.ranking"))
 
     return app

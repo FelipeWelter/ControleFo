@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Histórico{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">Meu Histórico de FOs</h2>
+
+<div class="row mb-4">
+
+    <div class="col-md-4">
+        <div class="card card-glass p-3">
+            <h6>FOs Positivos</h6>
+            <h3 class="text-success">{{ positivos|length }}</h3>
+            <p class="mb-0">{{ total_positivo }} ponto(s)</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-glass p-3">
+            <h6>FOs Negativos</h6>
+            <h3 class="text-danger">{{ negativos|length }}</h3>
+            <p class="mb-0">{{ total_negativo }} ponto(s)</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-glass p-3">
+            <h6>Saldo</h6>
+
+            {% if saldo >= 0 %}
+                <h3 class="text-success">{{ saldo }}</h3>
+            {% else %}
+                <h3 class="text-danger">{{ saldo }}</h3>
+            {% endif %}
+
+            <p class="mb-0">saldo líquido</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="card card-glass p-4">
+
+    {% if fatos %}
+
+    <div class="table-responsive">
+
+        <table class="table table-hover align-middle">
+
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Sinal</th>
+                    <th>Pontos</th>
+                    <th>Descrição</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for fato in fatos %}
+
+                <tr>
+                    <td>{{ fato.data_registro.strftime('%d/%m/%Y') }}</td>
+
+                    <td>{{ fato.tipo_fato.nome }}</td>
+
+                    <td>
+                        {% if fato.sinal == "POSITIVO" %}
+                            <span class="badge bg-success">POSITIVO</span>
+                        {% else %}
+                            <span class="badge bg-danger">NEGATIVO</span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ fato.pontos }}</td>
+
+                    <td>{{ fato.descricao }}</td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-info">
+        Você ainda não possui FOs publicados.
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
