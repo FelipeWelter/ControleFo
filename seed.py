@@ -108,7 +108,7 @@ with app.app_context():
     if not usuario:
         usuario = Usuario(
             username="admin",
-            senha_hash="admin",
+            senha_hash="admin", ###### ALTERAR #######
             nivel_permissao=2,
             militar_id=militar1.id,
         )

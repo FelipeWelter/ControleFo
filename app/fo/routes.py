@@ -7,6 +7,7 @@ from . import fo_bp
 from .models import TipoDeFato, FatoObservado
 from .permissions import requer_homologador
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
+from .models import Secao, PostoGraduacao
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
 @login_required
@@ -141,6 +142,8 @@ def ranking():
         Militar.id.label("militar_id"),
         Militar.nome_guerra.label("nome_guerra"),
         Militar.id_posto_graduacao.label("id_posto_graduacao"),
+        PostoGraduacao.nome.label("posto_grad"),
+        Militar.data_de_praca.label("data_de_praca"),
         func.sum(
             case(
                 (FatoObservado.sinal == "POSITIVO", FatoObservado.pontos),
@@ -156,6 +159,9 @@ def ranking():
     ).join(
         FatoObservado,
         FatoObservado.militar_id == Militar.id
+    ).join(
+        PostoGraduacao,
+        Militar.id_posto_graduacao == PostoGraduacao.id
     ).filter(
         FatoObservado.status == "Publicado"
     )
@@ -167,7 +173,8 @@ def ranking():
         Militar.id,
         Militar.nome_guerra,
         Militar.id_posto_graduacao,
-        Militar.data_de_praca
+        Militar.data_de_praca,
+        PostoGraduacao.nome
     )
 
     resultados = query.all()
@@ -195,6 +202,7 @@ def ranking():
         ranking_lista.append({
             "militar_id": item.militar_id,
             "nome_guerra": item.nome_guerra,
+            "posto_grad": item.posto_grad,
             "qtd_positivo": positivos,
             "qtd_negativo": negativos,
             "saldo": saldo,
@@ -212,4 +220,10 @@ def ranking():
         )
     )
 
-    return render_template("fo/ranking.html", ranking=ranking_lista, periodo=periodo)
+    secoes = Secao.query.order_by(Secao.nome.asc()).all()
+    return render_template(
+        "fo/ranking.html",
+        ranking=ranking_lista,
+        periodo=periodo,
+        secoes=secoes
+        )

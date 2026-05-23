@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Ranking Geral{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">Ranking Geral da Tropa</h2>
+
+<div class="row mb-4">
+
+    <div class="col-md-4">
+        <div class="card card-glass p-3">
+            <h6>Maior Pontuação</h6>
+
+            {% if ranking %}
+                <h4>
+                    {{ ranking[0].nome_guerra }}
+                </h4>
+
+                <p class="mb-0">
+                    {{ ranking[0].saldo }} pontos
+                </p>
+            {% else %}
+                <p>Nenhum dado.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-glass p-3">
+            <h6>Total de Militares</h6>
+
+            <h4>{{ ranking|length }}</h4>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-glass p-3">
+            <h6>Militares Negativados</h6>
+
+            <h4>
+                {{ ranking | selectattr('saldo', 'lt', 0) | list | length }}
+            </h4>
+        </div>
+    </div>
+
+</div>
+
+<div class="card card-glass p-4">
+
+    <form method="GET" class="row mb-4">
+
+        <div class="col-md-4">
+            <label class="form-label">Período</label>
+
+            <select name="periodo" class="form-select">
+
+                <option value="mes"
+                    {% if periodo == 'mes' %}selected{% endif %}>
+                    Mês Atual
+                </option>
+
+                <option value="trimestre"
+                    {% if periodo == 'trimestre' %}selected{% endif %}>
+                    Trimestre
+                </option>
+
+                <option value="ano"
+                    {% if periodo == 'ano' %}selected{% endif %}>
+                    Ano
+                </option>
+
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Seção</label>
+
+            <select name="secao_id" class="form-select">
+
+                <option value="">Todas</option>
+
+                {% for secao in secoes %}
+                    <option value="{{ secao.id }}"
+                        {% if request.args.get('secao_id') == secao.id|string %}
+                            selected
+                        {% endif %}>
+                        {{ secao.nome }}
+                    </option>
+                {% endfor %}
+
+            </select>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+
+            <button class="btn btn-primary w-100">
+                Filtrar
+            </button>
+
+        </div>
+
+    </form>
+
+    {% if ranking %}
+
+    <div class="table-responsive">
+
+        <table class="table table-hover align-middle">
+
+            <thead>
+
+                <tr>
+                    <th>#</th>
+                    <th>Posto/Graduação</th>
+                    <th>Nome de Guerra</th>
+                    <th>FO(+)</th>
+                    <th>FO(-)</th>
+                    <th>Saldo</th>
+                    <th>Conceito</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for militar in ranking %}
+
+                <tr>
+
+                    <td>
+                        {{ loop.index }}
+                    </td>
+
+                    <td>
+                        {{ militar.posto_grad }}
+                    </td>
+
+                    <td>
+                        {{ militar.nome_guerra }}
+                    </td>
+
+                    <td>
+                        <span class="badge bg-success">
+                            {{ militar.qtd_positivo }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="badge bg-danger">
+                            {{ militar.qtd_negativo }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{ militar.saldo }}
+                        </strong>
+                    </td>
+
+                    <td>
+
+                        <span class="badge bg-{{ militar.badge }}">
+                            {{ militar.conceito }}
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-warning">
+        Nenhum resultado encontrado.
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
