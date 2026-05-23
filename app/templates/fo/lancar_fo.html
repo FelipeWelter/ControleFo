@@ -35,7 +35,7 @@
             </select>
         </div>
         <div class="mb-3">
-            <label class="form-label">Pontuação</label>
+            <label class="form-label">Pontuação do FO</label>
 
             <input
                 type="text"
@@ -120,7 +120,7 @@ tipoSelect.addEventListener("change", async () => {
     const response = await fetch(`/fo/api/tipos/${tipoId}`);
     const tipo = await response.json();
 
-    pontuacaoInput.value = tipo.pontos;
+    pontuacaoInput.value = 1;
 
     foCard.classList.remove("positivo", "negativo");
     if(tipo.sinal === "POSITIVO") {

@@ -72,6 +72,7 @@ class TipoDeFato(db.Model):
     nome = db.Column(db.String(150), nullable=False)
     sinal = db.Column(db.String(10), nullable=False) #positivo ou negativo
     pontos = db.Column(db.Integer, nullable=False)
+    texto_boletim = db.Column(db.Text, nullable=True)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
 
     def __repr__(self):

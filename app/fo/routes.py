@@ -76,7 +76,7 @@ def api_tipo_fato(tipo_id):
         "id": tipo.id,
         "nome": tipo.nome,
         "sinal": tipo.sinal,
-        "pontos": tipo.pontos
+        "pontos": 1
     })
 
 @fo_bp.route("/homologacao")
@@ -251,12 +251,20 @@ def exportar_bi():
     linhas = []
 
     for fato in fatos:
+        modelo = fato.tipo_fato.texto_boletim or fato.descricao.strip()
+        descricao = fato.descricao.strip() if fato.descricao else ""
+        
+        try:
+            complemento = modelo.format(descricao=descricao)
+        except KeyError:
+            complemento = modelo
+                
         texto = (
             f"O {fato.cadastrador.militar.posto_graduacao.nome} "
             f"{fato.cadastrador.militar.nome_guerra} observa que o "
             f"{fato.militar.posto_graduacao.nome} "
             f"{fato.militar.nome_guerra} "
-            f"{fato.descricao.strip()}"
+            f"{complemento.strip()}"
         )
 
         linhas.append(texto)
@@ -386,7 +394,8 @@ def admin_tipo_novo():
         tipo = TipoDeFato(
             nome=request.form.get("nome"),
             sinal=request.form.get("sinal"),
-            pontos=request.form.get("pontos", type=int),
+            pontos=1,
+            texto_boletim=request.form.get("texto_boletim"),
             ativo=True if request.form.get("ativo") == "on" else False
         )
 
@@ -408,7 +417,8 @@ def admin_tipo_editar(tipo_id):
     if request.method == "POST":
         tipo.nome = request.form.get("nome")
         tipo.sinal = request.form.get("sinal")
-        tipo.pontos = request.form.get("pontos", type=int)
+        tipo.pontos = 1
+        tipo.texto_boletim = request.form.get("texto_boletim")
         tipo.ativo = True if request.form.get("ativo") == "on" else False
 
         db.session.commit()
