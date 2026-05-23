@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Editar FO{% endblock %}
+
+{% block content %}
+
+<div class="card card-glass p-4">
+
+    <h2 class="mb-4">Editar FO #{{ fato.id }}</h2>
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Militar</label>
+            <input class="form-control"
+                   value="{{ fato.militar.posto_graduacao.nome }} {{ fato.militar.nome_guerra }}"
+                   readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Descrição</label>
+            <textarea name="descricao"
+                      class="form-control"
+                      rows="6"
+                      required>{{ fato.descricao }}</textarea>
+        </div>
+
+        <button class="btn btn-success">
+            Salvar Alteração
+        </button>
+
+        <a href="{{ url_for('fo.homologacao') }}"
+           class="btn btn-secondary">
+            Voltar
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

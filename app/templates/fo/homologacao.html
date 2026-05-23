@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Homologação{% endblock %}
+{% block content %}
+
+<h2 class="mb-4">Homologação</h2>
+
+<div class="alert alert-info">
+    Total pendente: <strong>{{ total_pendente }}</strong><br>
+</div>
+
+{% if fatos %}
+
+<div class="accordion" id="accordionFO">
+    {% for fato in fatos %}
+
+    <div class="accordion-item mb-3">
+
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#fo{{ fato.id}}">
+            
+                FO #{{ fato.id }} -
+                {{ fato.militar.posto_graduacao.nome }}
+                {{ fato.militar.nome_guerra }}
+                -
+                {{ fato.sinal}}
+                -
+                {{ fato.pontos }} pts
+
+            </button>
+        </h2>
+        <div id="fo{{ fato.id }}" class="accordion-collapse collapse"
+            data-bs-parent="#accordionFO">
+
+            <div class="accordion-body">
+
+                <p><strong>Tipo:</strong> {{ fato.tipo_fato.nome }}</p>
+
+                <p><strong>Descrição:</strong></p>
+                <p>{{ fato.descricao }}</p>
+
+                <p>
+                    <strong>Cadastrador:</strong>
+                    {{ fato.cadastrador.username}}
+                </p>
+
+                <p>
+                    <strong>Data:</strong>
+                    {{ fato.data_registro.strftime('%d/%m/%Y %H:%M') }}
+                </p>
+
+                {% if fato.comprovante %}
+                    <p><strong>Evidências:</strong></p>
+                    <ul>
+                        {% for evidencia in fato.evidencias %}
+                            <li>{{ evidencia.nome_original }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <div class="d-flex gap-2 mt-3">
+                    <form method="POST"
+                        action="{{ url_for('fo.aprovar', fato_id=fato.id) }}">
+                        <button class="btn btn-success">
+                            Aprovar
+                        </button>
+                    </form>
+
+                    <a href="{{url_for('fo.editar', fato_id=fato.id) }}"
+                        class="btn btn-warning">
+                        Editar
+                    </a>
+
+                    <button class="btn btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalRecusar{{ fato.id }}">
+                        Recusar
+                    </button>
+                
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Recusa -->
+    <div class="modal fade" id="modalRecusar{{ fato.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <form method="POST"
+                    action="{{ url_for('fo.recusar', fato_id=fato.id) }}">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Recusar FO #{{ fato.id }}</h5>
+                        <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <label class="form-label">Justificativa:</label>
+                            <textarea name="justificativa"
+                                class="form-control"
+                                rows="4"
+                                required>
+                            </textarea>
+                    </div>
+                
+                    <div class="modal-footer">
+                        <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+
+                        <button class="btn btn-danger">
+                            Confirmar
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% else %}
+    <div class="alert alert-success">
+        Nenhuma FO pendente de homologação.
+    </div>
+{% endif %}
+
+{% endblock %}
