@@ -120,27 +120,9 @@ class FatoObservado(db.Model):
     cadastrador = db.relationship("Usuario", foreign_keys=[cadastrador_id])
     homologador = db.relationship("Usuario", foreign_keys=[homologador_id])
     tipo_fato = db.relationship("TipoDeFato")
-    evidencias = db.relationship("EvidenciaFO", backref="fato", lazy=True)
 
     def __repr__(self):
         return f"<FO {self.id} - {self.sinal} - {self.status}>"
-
-class EvidenciaFO(db.Model):
-    __tablename__ = "evidencias_fo"
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    fato_id = db.Column(
-        db.Integer,
-        db.ForeignKey("fatos_observados.id", ondelete="RESTRICT"),
-        nullable=False
-    )
-
-    nome_original = db.Column(db.String(255), nullable=False)
-    nome_arquivo = db.Column(db.String(255), nullable=False)
-    caminho = db.Column(db.String(500), nullable=False)
-    tipo_mime = db.Column(db.String(100), nullable=False)
-    data_upload = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 class HistoricoEdicaoFO(db.Model):
     __tablename__ = "historico_edicao_fo"

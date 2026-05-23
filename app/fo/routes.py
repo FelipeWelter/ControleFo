@@ -23,7 +23,6 @@ def novo_fo():
         militar_id = request.form.get("militar_id", type=int)
         tipo_fato_id = request.form.get("tipo_fato_id", type=int)
         descricao = request.form.get("descricao", "")
-        arquivos = request.files.getlist("evidencias")
 
         militar = Militar.query.get_or_404(militar_id)
         tipo_fato = TipoDeFato.query.filter_by(id=tipo_fato_id, ativo=True).first_or_404()
@@ -32,8 +31,7 @@ def novo_fo():
             usuario_logado=current_user,
             militar_alvo=militar,
             tipo_fato=tipo_fato,
-            descricao=descricao,
-            arquivos=arquivos
+            descricao=descricao
         )
 
         flash("FO registrado com sucesso e enviado para homologação.", "success")
