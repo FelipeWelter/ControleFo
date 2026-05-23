@@ -10,79 +10,102 @@
 
 {% if fatos %}
 
+<form method="POST" action="{{ url_for('fo.exportar_bi') }}">
+    <div class="mt-3">
+        <button class="btn btn-dark" type="submit">
+            Exportar para BI
+        </button>
+    </div>
+</form>
+
 <div class="accordion" id="accordionFO">
     {% for fato in fatos %}
 
-    <div class="accordion-item mb-3">
+        <div class="accordion-item mb-3">
 
-        <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button"
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#fo{{ fato.id}}">
-            
-                FO #{{ fato.id }} -
-                {{ fato.militar.posto_graduacao.nome }}
-                {{ fato.militar.nome_guerra }}
-                -
-                {{ fato.sinal}}
-                -
-                {{ fato.pontos }} pts
+        
+                    FO #{{ fato.id }} -
+                    {{ fato.militar.posto_graduacao.nome }}                        {{ fato.militar.nome_guerra }}
+                    -
+                    {{ fato.sinal}}
+                    -
+                    {{ fato.pontos }} pts
 
-            </button>
-        </h2>
-        <div id="fo{{ fato.id }}" class="accordion-collapse collapse"
-            data-bs-parent="#accordionFO">
+                </button>
+            </h2>
+            <div id="fo{{ fato.id }}" class="accordion-collapse collapse"
+                data-bs-parent="#accordionFO">
 
-            <div class="accordion-body">
+                <div class="accordion-body">
 
-                <p><strong>Tipo:</strong> {{ fato.tipo_fato.nome }}</p>
+                    {% if fato.status == "Publicado" %}
+                    <div class="form-check mb-3">
+                        <input class="form-check-input"
+                        type="checkbox"
+                         name="fo_ids"
+                         value="{{ fato.id }}"
+                          id="foCheck{{ fato.id }}">
 
-                <p><strong>Descrição:</strong></p>
-                <p>{{ fato.descricao }}</p>
+                          <label class="form-check-label"
+                              for="foCheck{{ fato.id }}">
+                              Selecionar para exportação
+                           </label>
+                        </div>
+                    {% endif %}
 
-                <p>
-                    <strong>Cadastrador:</strong>
-                    {{ fato.cadastrador.username}}
-                </p>
+                    <p><strong>Tipo:</strong> {{ fato.tipo_fato.nome }}</p>
 
-                <p>
-                    <strong>Data:</strong>
-                    {{ fato.data_registro.strftime('%d/%m/%Y %H:%M') }}
-                </p>
+                    <p><strong>Descrição:</strong></p>
+                     <p>{{ fato.descricao }}</p>
 
-                {% if fato.comprovante %}
-                    <p><strong>Evidências:</strong></p>
-                    <ul>
-                        {% for evidencia in fato.evidencias %}
-                            <li>{{ evidencia.nome_original }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+                    <p>
+                        <strong>Cadastrador:</strong>
+                        {{ fato.cadastrador.username}}
+                    </p>
 
-                <div class="d-flex gap-2 mt-3">
-                    <form method="POST"
-                        action="{{ url_for('fo.aprovar', fato_id=fato.id) }}">
-                        <button class="btn btn-success">
-                            Aprovar
+                    <p>
+                        <strong>Data:</strong>
+                           {{ fato.data_registro.strftime('%d/%m/%Y %H:%M') }}
+                    </p>
+
+                    {% if fato.comprovante %}
+                        <p><strong>Evidências:</strong></p>
+                        <ul>
+                            {% for evidencia in fato.evidencias %}
+                               <li>{{ evidencia.nome_original }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 mt-3">
+                        <form method="POST"
+                            action="{{ url_for('fo.aprovar', fato_id=fato.id) }}">
+                            <button class="btn btn-success">
+                                Aprovar
+                            </button>
+                        </form>
+
+                        <a href="{{url_for('fo.editar', fato_id=fato.id) }}"
+                            class="btn btn-warning">
+                            Editar
+                        </a>
+
+                        <button class="btn btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalRecusar{{ fato.id }}">
+                            Recusar
                         </button>
-                    </form>
-
-                    <a href="{{url_for('fo.editar', fato_id=fato.id) }}"
-                        class="btn btn-warning">
-                        Editar
-                    </a>
-
-                    <button class="btn btn-danger"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modalRecusar{{ fato.id }}">
-                        Recusar
-                    </button>
-                
+                    </div>
                 </div>
-
             </div>
         </div>
-    </div>
+
+    {% endfor %}
+</div>
 
     <!-- Modal de Recusa -->
     <div class="modal fade" id="modalRecusar{{ fato.id }}" tabindex="-1">
@@ -126,9 +149,6 @@
             </div>
         </div>
     </div>
-
-    {% endfor %}
-
 </div>
 
 {% else %}

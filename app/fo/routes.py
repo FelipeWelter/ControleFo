@@ -8,6 +8,7 @@ from .models import TipoDeFato, FatoObservado
 from .permissions import requer_homologador
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
 from .models import Secao, PostoGraduacao
+from flask import Response
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
 @login_required
@@ -227,3 +228,56 @@ def ranking():
         periodo=periodo,
         secoes=secoes
         )
+
+@fo_bp.route("/exportar-bi", methods=["POST"])
+@login_required
+@requer_homologador
+def exportar_bi():
+    ids = request.form.getlist("fo_ids")
+
+    if not ids:
+        flash("Nenhum FO selecionado para exportação.", "warning")
+        return redirect(url_for("fo.exportacao"))
+
+    fatos = FatoObservado.query.filter(
+        FatoObservado.id.in_(ids),
+        FatoObservado.status == "Publicado"
+    ).order_by(FatoObservado.data_registro.asc()).all()
+
+    linhas = []
+
+    for fato in fatos:
+        texto = (
+            f"O {fato.cadastrador.militar.posto_graduacao.nome} "
+            f"{fato.cadastrador.militar.nome_guerra} observa que o "
+            f"{fato.militar.posto_graduacao.nome} "
+            f"{fato.militar.nome_guerra} "
+            f"{fato.descricao.strip()}"
+        )
+
+        linhas.append(texto)
+
+    conteudo = "\n\n".join(linhas)
+
+    return Response(
+        conteudo,
+        mimetype="text/plain",
+        headers={"Content-Disposition": "attachment;filename=boletim_fo.txt"
+        }
+    )
+
+@fo_bp.route("/exportacao")
+@login_required
+@requer_homologador
+def exportacao():
+
+    fatos = FatoObservado.query.filter_by(
+        status="Publicado"
+    ).order_by(
+        FatoObservado.data_registro.desc()
+    ).all()
+
+    return render_template(
+        "fo/exportacao.html",
+        fatos=fatos
+    )

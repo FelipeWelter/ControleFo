@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 from config import Config
 from app.extensions import db, login_manager, migrate
 
@@ -25,5 +25,9 @@ def create_app():
 
     from app.auth import auth_bp
     app.register_blueprint(auth_bp)
+
+    @app.route("/")
+    def index():
+        return redirect(url_for("fo.ranking"))
 
     return app
