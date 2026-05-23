@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
 from app.auth import auth_bp
 from app.fo.models import Usuario
+from werkzeug.security import check_password_hash
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -11,7 +12,10 @@ def login():
 
         usuario = Usuario.query.filter_by(username=username).first()
 
-        if not usuario or usuario.senha_hash != senha:
+        if not usuario or not check_password_hash(
+            usuario.senha_hash,
+            senha
+        ):
             flash("Usuário ou senha inválidos.", "danger")
             return redirect(url_for("auth.login"))
 
