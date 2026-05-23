@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-4">
+
+        <div class="card card-class p-4">
+
+            <h3 class="mb-4 text-center">Sistema FO</h3>
+
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label class="form-label">Usuário</label>
+                    <input type="text" class="form-control" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-control" name="senha" required>
+                </div>
+                <button class="btn btn-primary w-100">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
