@@ -45,8 +45,18 @@ class Usuario(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     senha_hash = db.Column(db.String(128), nullable=False)
-    nivel_permissao = db.Column(db.Integer, default=1, nullable=False) # "Cadastrador", "Homologador", "Administrador"
 
+    ######### A implementação de níveis de permissão pode ser feita de várias formas, dependendo das necessidades do sistema. Uma abordagem comum é usar um campo de enumeração ou um campo de string para representar o nível de permissão do usuário.
+    # 
+    # nivel_permissao = db.Column(db.Integer, default=1, nullable=False) # "Cadastrador", "Homologador", "Administrador"
+##################################
+
+    perfil = db.Column(
+        db.String(20),
+        nullable=False,
+        default="MILITAR"
+    )
+    
     militar_id = db.Column(
         db.Integer,
         db.ForeignKey("militares.id", ondelete="RESTRICT"),

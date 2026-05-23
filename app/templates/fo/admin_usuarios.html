@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Usuários</h2>
+
+    <a href="{{ url_for('fo.admin_usuario_novo') }}"
+       class="btn btn-primary">
+        Novo Usuário
+    </a>
+</div>
+
+<div class="card card-glass p-4">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Usuário</th>
+                <th>Militar Vinculado</th>
+                <th>Nível</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+                <td>{{ usuario.username }}</td>
+                <td>
+                    {% if usuario.militar %}
+                        {{ usuario.militar.posto_graduacao.nome }}
+                        {{ usuario.militar.nome_guerra }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if usuario.perfil == "MILITAR" %}
+                        <span class="badge bg-secondary">Lançador</span>
+                    {% elif usuario.perfil == "CADASTRADOR" %}
+                        <span class="badge bg-primary">Cadastrador</span>
+                    {% elif usuario.perfil == "BOLETIM" %}
+                        <span class="badge bg-info">Boletim</span>
+                    {% elif usuario.perfil == "HOMOLOGADOR" %}
+                        <span class="badge bg-warning">Homologador</span>
+                    {% elif usuario.perfil == "ADMIN" %}
+                        <span class="badge bg-dark">Administrador</span>
+                    {% else %}
+                        <span class="badge bg-light text-dark">{{ usuario.perfil }}</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <a href="{{ url_for('fo.admin_usuario_editar', usuario_id=usuario.id) }}"
+                       class="btn btn-sm btn-warning">
+                        Editar
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

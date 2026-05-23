@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Usuário{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    {% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}
+</h2>
+
+<div class="card card-glass p-4">
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Nome de Usuário</label>
+            <input type="text"
+                   name="username"
+                   class="form-control"
+                   value="{{ usuario.username if usuario else '' }}"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">
+                Senha
+                {% if usuario %}
+                    <small class="text-muted">(deixe em branco para manter)</small>
+                {% endif %}
+            </label>
+
+            <input type="password"
+                   name="senha"
+                   class="form-control"
+                   {% if not usuario %}required{% endif %}>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Nível de Permissão</label>
+
+            <select name="perfil" class="form-select" required>
+                <option value="MILITAR" {% if usuario and usuario.perfil == "MILITAR" %}selected{% endif %}>
+                    Militar - Consulta pessoal
+                </option>
+
+                <option value="CADASTRADOR" {% if usuario and usuario.perfil == "CADASTRADOR" %}selected{% endif %}>
+                    Cadastrador - Cadastro de militares
+                </option>
+
+                <option value="BOLETIM" {% if usuario and usuario.perfil == "BOLETIM" %}selected{% endif %}>
+                     Boletim - Exportação BI
+                </option>
+
+                <option value="HOMOLOGADOR" {% if usuario and usuario.perfil == "HOMOLOGADOR" %}selected{% endif %}>
+                    Homologador - Aprovação de FO
+                </option>
+
+                <option value="ADMIN" {% if usuario and usuario.perfil == "ADMIN" %}selected{% endif %}>
+                    Administrador - Acesso total
+                </option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Militar Vinculado</label>
+
+            <select name="militar_id"
+                    class="form-select">
+
+                <option value="">Nenhum</option>
+
+                {% for militar in militares %}
+                    <option value="{{ militar.id }}"
+                        {% if usuario and usuario.militar_id == militar.id %}selected{% endif %}>
+                        {{ militar.posto_graduacao.nome }} {{ militar.nome_guerra }}
+                    </option>
+                {% endfor %}
+
+            </select>
+        </div>
+
+        <button class="btn btn-success">
+            Salvar
+        </button>
+
+        <a href="{{ url_for('fo.admin_usuarios') }}"
+           class="btn btn-secondary">
+            Voltar
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Militares{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Militares</h2>
+
+    <a href="{{ url_for('fo.admin_militar_novo') }}"
+       class="btn btn-primary">
+        Novo Militar
+    </a>
+</div>
+
+<div class="card card-glass p-4">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Posto/Graduação</th>
+                <th>Nome de Guerra</th>
+                <th>Identidade</th>
+                <th>Seção</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for militar in militares %}
+            <tr>
+                <td>{{ militar.posto_graduacao.nome }}</td>
+                <td>{{ militar.nome_guerra }}</td>
+                <td>{{ militar.identidade_militar }}</td>
+                <td>{{ militar.secao.nome if militar.secao else "-" }}</td>
+                <td class="text-end">
+                    <a href="{{ url_for('fo.admin_militar_editar', militar_id=militar.id) }}"
+                       class="btn btn-sm btn-warning">
+                        Editar
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

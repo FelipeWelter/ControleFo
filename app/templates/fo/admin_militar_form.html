@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Militar{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    {% if militar %}Editar Militar{% else %}Novo Militar{% endif %}
+</h2>
+
+<div class="card card-glass p-4">
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Nome de Guerra</label>
+            <input type="text"
+                   name="nome_guerra"
+                   class="form-control"
+                   value="{{ militar.nome_guerra if militar else '' }}"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Identidade Militar</label>
+            <input type="text"
+                   name="identidade_militar"
+                   class="form-control"
+                   value="{{ militar.identidade_militar if militar else '' }}"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Posto/Graduação</label>
+            <select name="id_posto_graduacao"
+                    class="form-select"
+                    required>
+                <option value="">Selecione...</option>
+
+                {% for posto in postos %}
+                    <option value="{{ posto.id }}"
+                        {% if militar and militar.id_posto_graduacao == posto.id %}selected{% endif %}>
+                        {{ posto.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Data de Praça</label>
+
+                <input type="date"
+                    name="data_de_praca"
+                    class="form-control"
+                    value="{% if militar and militar.data_de_praca %}{{ militar.data_de_praca.strftime('%Y-%m-%d') }}{% endif %}"
+                    required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Seção</label>
+            <select name="id_secao"
+                    class="form-select">
+                <option value="">Selecione...</option>
+
+                {% for secao in secoes %}
+                    <option value="{{ secao.id }}"
+                        {% if militar and militar.id_secao == secao.id %}selected{% endif %}>
+                        {{ secao.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button class="btn btn-success">
+            Salvar
+        </button>
+
+        <a href="{{ url_for('fo.admin_militares') }}"
+           class="btn btn-secondary">
+            Voltar
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

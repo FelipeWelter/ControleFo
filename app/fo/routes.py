@@ -5,10 +5,16 @@ from app.extensions import db
 from app.fo.models import Militar
 from . import fo_bp
 from .models import TipoDeFato, FatoObservado
-from .permissions import requer_homologador
+from .permissions import (
+    requer_homologador,
+    requer_admin,
+    perfil_permitido
+)
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
-from .models import Secao, PostoGraduacao
 from flask import Response
+from werkzeug.security import generate_password_hash
+from .models import Usuario, Militar, PostoGraduacao, Secao, TipoDeFato
+from datetime import datetime
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
 @login_required
@@ -231,7 +237,7 @@ def ranking():
 
 @fo_bp.route("/exportar-bi", methods=["POST"])
 @login_required
-@requer_homologador
+@perfil_permitido("BOLETIM")
 def exportar_bi():
     ids = request.form.getlist("fo_ids")
 
@@ -268,7 +274,7 @@ def exportar_bi():
 
 @fo_bp.route("/exportacao")
 @login_required
-@requer_homologador
+@perfil_permitido("BOLETIM")
 def exportacao():
 
     fatos = FatoObservado.query.filter_by(
@@ -280,4 +286,204 @@ def exportacao():
     return render_template(
         "fo/exportacao.html",
         fatos=fatos
+    )
+
+# =========================
+# ADMIN - MILITARES
+# =========================
+
+@fo_bp.route("/admin/militares")
+@login_required
+@perfil_permitido("CADASTRADOR")
+def admin_militares():
+    militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
+    return render_template("fo/admin_militares.html", militares=militares)
+
+
+@fo_bp.route("/admin/militares/novo", methods=["GET", "POST"])
+@login_required
+@perfil_permitido("CADASTRADOR")
+def admin_militar_novo():
+    postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
+    secoes = Secao.query.order_by(Secao.nome.asc()).all()
+
+    if request.method == "POST":
+        militar = Militar(
+            nome_guerra=request.form.get("nome_guerra"),
+            identidade_militar=request.form.get("identidade_militar"),
+            id_posto_graduacao=request.form.get("id_posto_graduacao", type=int),
+
+            data_de_praca=datetime.strptime(
+                request.form.get("data_de_praca"),
+                "%Y-%m-%d"
+            ).date(),
+
+            id_secao=request.form.get("id_secao", type=int),
+        )
+
+        db.session.add(militar)
+        db.session.commit()
+
+        flash("Militar cadastrado com sucesso.", "success")
+        return redirect(url_for("fo.admin_militares"))
+
+    return render_template(
+        "fo/admin_militar_form.html",
+        militar=None,
+        postos=postos,
+        secoes=secoes
+    )
+
+
+@fo_bp.route("/admin/militares/<int:militar_id>/editar", methods=["GET", "POST"])
+@login_required
+@perfil_permitido("CADASTRADOR")
+def admin_militar_editar(militar_id):
+    militar = Militar.query.get_or_404(militar_id)
+    postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
+    secoes = Secao.query.order_by(Secao.nome.asc()).all()
+
+    if request.method == "POST":
+        militar.nome_guerra = request.form.get("nome_guerra")
+        militar.identidade_militar = request.form.get("identidade_militar")
+        militar.id_posto_graduacao = request.form.get("id_posto_graduacao", type=int)
+
+        militar.data_de_praca = datetime.strptime(
+            request.form.get("data_de_praca"),
+            "%Y-%m-%d"
+        ).date()
+
+        militar.id_secao = request.form.get("id_secao", type=int)
+
+        db.session.commit()
+
+        flash("Militar atualizado com sucesso.", "success")
+        return redirect(url_for("fo.admin_militares"))
+
+    return render_template(
+        "fo/admin_militar_form.html",
+        militar=militar,
+        postos=postos,
+        secoes=secoes
+    )
+
+
+# =========================
+# ADMIN - TIPOS DE FO
+# =========================
+
+@fo_bp.route("/admin/tipos")
+@login_required
+@requer_admin
+def admin_tipos():
+    tipos = TipoDeFato.query.order_by(TipoDeFato.nome.asc()).all()
+    return render_template("fo/admin_tipos.html", tipos=tipos)
+
+
+@fo_bp.route("/admin/tipos/novo", methods=["GET", "POST"])
+@login_required
+@requer_admin
+def admin_tipo_novo():
+    if request.method == "POST":
+        tipo = TipoDeFato(
+            nome=request.form.get("nome"),
+            sinal=request.form.get("sinal"),
+            pontos=request.form.get("pontos", type=int),
+            ativo=True if request.form.get("ativo") == "on" else False
+        )
+
+        db.session.add(tipo)
+        db.session.commit()
+
+        flash("Tipo de FO cadastrado com sucesso.", "success")
+        return redirect(url_for("fo.admin_tipos"))
+
+    return render_template("fo/admin_tipo_form.html", tipo=None)
+
+
+@fo_bp.route("/admin/tipos/<int:tipo_id>/editar", methods=["GET", "POST"])
+@login_required
+@requer_admin
+def admin_tipo_editar(tipo_id):
+    tipo = TipoDeFato.query.get_or_404(tipo_id)
+
+    if request.method == "POST":
+        tipo.nome = request.form.get("nome")
+        tipo.sinal = request.form.get("sinal")
+        tipo.pontos = request.form.get("pontos", type=int)
+        tipo.ativo = True if request.form.get("ativo") == "on" else False
+
+        db.session.commit()
+
+        flash("Tipo de FO atualizado com sucesso.", "success")
+        return redirect(url_for("fo.admin_tipos"))
+
+    return render_template("fo/admin_tipo_form.html", tipo=tipo)
+
+
+# =========================
+# ADMIN - USUÁRIOS
+# =========================
+
+@fo_bp.route("/admin/usuarios")
+@login_required
+@requer_admin
+def admin_usuarios():
+    usuarios = Usuario.query.order_by(Usuario.username.asc()).all()
+    return render_template("fo/admin_usuarios.html", usuarios=usuarios)
+
+
+@fo_bp.route("/admin/usuarios/novo", methods=["GET", "POST"])
+@login_required
+@requer_admin
+def admin_usuario_novo():
+    militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
+
+    if request.method == "POST":
+        usuario = Usuario(
+            username=request.form.get("username"),
+            senha_hash=generate_password_hash(request.form.get("senha")),
+            perfil=request.form.get("perfil"),
+            militar_id=request.form.get("militar_id", type=int)
+        )
+
+        db.session.add(usuario)
+        db.session.commit()
+
+        flash("Usuário cadastrado com sucesso.", "success")
+        return redirect(url_for("fo.admin_usuarios"))
+
+    return render_template(
+        "fo/admin_usuario_form.html",
+        usuario=None,
+        militares=militares
+    )
+
+
+@fo_bp.route("/admin/usuarios/<int:usuario_id>/editar", methods=["GET", "POST"])
+@login_required
+@requer_admin
+def admin_usuario_editar(usuario_id):
+    usuario = Usuario.query.get_or_404(usuario_id)
+    militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
+
+    if request.method == "POST":
+        usuario.username = request.form.get("username")
+        usuario.perfil = request.form.get("perfil")
+        usuario.militar_id = request.form.get("militar_id", type=int)
+
+        nova_senha = request.form.get("senha")
+
+        if nova_senha:
+            usuario.senha_hash = generate_password_hash(nova_senha)
+
+        db.session.commit()
+
+        flash("Usuário atualizado com sucesso.", "success")
+        return redirect(url_for("fo.admin_usuarios"))
+
+    return render_template(
+        "fo/admin_usuario_form.html",
+        usuario=usuario,
+        militares=militares
     )

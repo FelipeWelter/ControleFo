@@ -72,40 +72,65 @@
             {% if current_user.is_authenticated %}
 
             <ul class="navbar-nav me-auto">
-                
-                <li class="nav-item">
-                    <a class="nav-link"
-                        href="{{ url_for('fo.novo_fo') }}">
-                        Novo FO
-                    </a>
-                </li>
 
-                <li class="nav-item">
-                    <a class="nav-link"
-                        href="{{ url_for('fo.homologacao') }}">
-                        Homologação
-                    </a>
-                </li>
+                {% if current_user.perfil in ["HOMOLOGADOR", "ADMIN"] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.novo_fo') }}">
+                            Novo FO
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link"
-                        href="{{ url_for('fo.ranking') }}">
-                        Ranking
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.homologacao') }}">
+                            Homologação
+                        </a>
+                    </li>
+                {% endif %}
 
-                <li class="nav-item">
-                    <a class="nav-link"
-                    href="{{ url_for('fo.exportacao') }}">
-                    Exportação BI
-                    </a>
-                </li>
+                {% if current_user.perfil in ["MILITAR", "HOMOLOGADOR", "ADMIN"] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.ranking') }}">
+                            Ranking
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if current_user.perfil in ["BOLETIM", "ADMIN"] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.exportacao') }}">
+                            Exportação BI
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if current_user.perfil in ["CADASTRADOR", "ADMIN"] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.admin_militares') }}">
+                            Militares
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if current_user.perfil == "ADMIN" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.admin_tipos') }}">
+                            Tipos de FO
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.admin_usuarios') }}">
+                            Usuários
+                        </a>
+                    </li>
+                {% endif %}
+
             </ul>
 
             <div class="d-flex align-items-center gap-3">
 
                 <span class="navbar-text">
-                    {{ current_user.username }}
+                    {{ current_user.username }} | {{ current_user.perfil }}
                 </span>
 
                 <a class="btn btn-outline-light btn-sm"

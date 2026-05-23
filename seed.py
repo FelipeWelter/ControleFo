@@ -111,7 +111,7 @@ with app.app_context():
         usuario = Usuario(
             username="admin",
             senha_hash=generate_password_hash("admin"),
-            nivel_permissao=2,
+            perfil="ADMIN",
             militar_id=militar1.id,
         )
 
