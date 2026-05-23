@@ -3,6 +3,8 @@ from datetime import date
 from app import create_app
 from app.extensions import db
 
+from werkzeug.security import generate_password_hash
+
 from app.fo.models import (
     Usuario,
     Militar,
@@ -108,7 +110,7 @@ with app.app_context():
     if not usuario:
         usuario = Usuario(
             username="admin",
-            senha_hash="admin", ###### ALTERAR #######
+            senha_hash=generate_password_hash("admin"),
             nivel_permissao=2,
             militar_id=militar1.id,
         )
