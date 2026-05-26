@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Dashboard</h2>
+        <small class="text-muted">
+            Bem-vindo, {{ current_user.username }} | Perfil: {{ current_user.perfil }}
+        </small>
+    </div>
+</div>
+
+<div class="row mb-4">
+
+    {% if current_user.perfil in ["ADMIN", "HOMOLOGADOR"] %}
+    <div class="col-md-3">
+        <div class="card card-glass p-3">
+            <h6>Militares</h6>
+            <h3>{{ total_militares }}</h3>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-glass p-3">
+            <h6>Total de FOs</h6>
+            <h3>{{ total_fos }}</h3>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-glass p-3">
+            <h6>Pendentes</h6>
+            <h3 class="text-warning">{{ pendentes }}</h3>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card card-glass p-3">
+            <h6>Publicados</h6>
+            <h3 class="text-success">{{ publicados }}</h3>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if current_user.perfil == "BOLETIM" %}
+    <div class="col-md-6">
+        <div class="card card-glass p-3">
+            <h6>FOs Publicados</h6>
+            <h3 class="text-success">{{ publicados }}</h3>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <a href="{{ url_for('fo.exportacao') }}"
+           class="btn btn-dark w-100 h-100 d-flex align-items-center justify-content-center">
+            Ir para Exportação BI
+        </a>
+    </div>
+    {% endif %}
+
+    {% if current_user.perfil == "MILITAR" %}
+    <div class="col-md-4">
+        <div class="card card-glass p-3">
+            <h6>Meu Saldo</h6>
+
+            {% if saldo_pessoal >= 0 %}
+                <h3 class="text-success">{{ saldo_pessoal }}</h3>
+            {% else %}
+                <h3 class="text-danger">{{ saldo_pessoal }}</h3>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <a href="{{ url_for('fo.meu_historico') }}"
+           class="btn btn-primary w-100 h-100 d-flex align-items-center justify-content-center">
+            Ver Meu Histórico
+        </a>
+    </div>
+    {% endif %}
+
+    {% if current_user.perfil == "CADASTRADOR" %}
+    <div class="col-md-6">
+        <div class="card card-glass p-3">
+            <h6>Militares Cadastrados</h6>
+            <h3>{{ total_militares }}</h3>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <a href="{{ url_for('fo.admin_militares') }}"
+           class="btn btn-primary w-100 h-100 d-flex align-items-center justify-content-center">
+            Gerenciar Militares
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if current_user.perfil in ["ADMIN", "HOMOLOGADOR"] %}
+
+<div class="card card-glass p-4 mb-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Últimos FOs Lançados</h5>
+
+        <a href="{{ url_for('fo.homologacao') }}"
+           class="btn btn-sm btn-warning">
+            Ver Homologação
+        </a>
+    </div>
+
+    {% if ultimos_fos %}
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Militar</th>
+                <th>Sinal</th>
+                <th>Status</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for fato in ultimos_fos %}
+            <tr>
+                <td>#{{ fato.id }}</td>
+                <td>
+                    {{ fato.militar.posto_graduacao.nome }}
+                    {{ fato.militar.nome_guerra }}
+                </td>
+                <td>
+                    {% if fato.sinal == "POSITIVO" %}
+                        <span class="badge bg-success">POSITIVO</span>
+                    {% else %}
+                        <span class="badge bg-danger">NEGATIVO</span>
+                    {% endif %}
+                </td>
+                <td>{{ fato.status }}</td>
+                <td>{{ fato.data_registro.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="alert alert-info mb-0">Nenhum FO lançado ainda.</div>
+    {% endif %}
+
+</div>
+
+{% endif %}
+
+{% if current_user.perfil == "MILITAR" %}
+
+<div class="card card-glass p-4">
+
+    <h5 class="mb-3">Meus últimos FOs</h5>
+
+    {% if meus_fos %}
+
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Sinal</th>
+                <th>Pontos</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for fato in meus_fos %}
+            <tr>
+                <td>{{ fato.data_registro.strftime('%d/%m/%Y') }}</td>
+                <td>{{ fato.tipo_fato.nome }}</td>
+                <td>
+                    {% if fato.sinal == "POSITIVO" %}
+                        <span class="badge bg-success">POSITIVO</span>
+                    {% else %}
+                        <span class="badge bg-danger">NEGATIVO</span>
+                    {% endif %}
+                </td>
+                <td>{{ fato.pontos }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+
+        <div class="alert alert-info mb-0">
+            Você ainda não possui FOs publicados.
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endif %}
+
+{% endblock %}

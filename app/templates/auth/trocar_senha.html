@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Trocar Senha{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">Trocar Senha</h2>
+
+<div class="card card-glass p-4">
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Senha Atual</label>
+            <input type="password"
+                   name="senha_atual"
+                   class="form-control"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Nova Senha</label>
+            <input type="password"
+                   name="nova_senha"
+                   class="form-control"
+                   required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Confirmar Nova Senha</label>
+            <input type="password"
+                   name="confirmar_senha"
+                   class="form-control"
+                   required>
+        </div>
+
+        <button class="btn btn-success">
+            Alterar Senha
+        </button>
+
+        <a href="{{ url_for('index') }}"
+           class="btn btn-secondary">
+            Voltar
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

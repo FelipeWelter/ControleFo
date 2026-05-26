@@ -5,6 +5,7 @@ from app.extensions import db
 from app.fo.models import Militar
 from . import fo_bp
 from .models import TipoDeFato, FatoObservado
+
 from .permissions import (
     requer_homologador,
     requer_admin,
@@ -49,6 +50,7 @@ def api_buscar_militares():
         return jsonify([])
 
     militares = Militar.query.filter(
+        Militar.ativo == True,
         or_(
             Militar.nome_guerra.ilike(f"%{termo}%"),
             Militar.identidade_militar.ilike(f"%{termo}%")
@@ -373,6 +375,7 @@ def admin_militar_editar(militar_id):
         militar.nome_guerra = request.form.get("nome_guerra")
         militar.identidade_militar = nova_identidade
         militar.id_posto_graduacao = request.form.get("id_posto_graduacao", type=int)
+        militar.ativo = True if request.form.get("ativo") == "on" else False
         
         militar.data_de_praca = datetime.strptime(
             request.form.get("data_de_praca"),
@@ -589,3 +592,43 @@ def admin_usuario_excluir(usuario_id):
 
     flash("Usuário excluído com sucesso.", "success")
     return redirect(url_for("fo.admin_usuarios"))
+
+@fo_bp.route("/dashboard")
+@login_required
+def dashboard():
+
+    total_militares = Militar.query.count()
+    total_fos = FatoObservado.query.count()
+    pendentes = FatoObservado.query.filter_by(status="Pendente").count()
+    publicados = FatoObservado.query.filter_by(status="Publicado").count()
+
+    ultimos_fos = FatoObservado.query.order_by(
+        FatoObservado.data_registro.desc()
+    ).limit(5).all()
+
+    meus_fos = []
+
+    saldo_pessoal = 0
+
+    if current_user.militar_id:
+        meus_fos = FatoObservado.query.filter_by(
+            militar_id=current_user.militar_id,
+            status="Publicado"
+        ).order_by(
+            FatoObservado.data_registro.desc()
+        ).limit(5).all()
+
+        positivos = sum(f.pontos for f in meus_fos if f.sinal == "POSITIVO")
+        negativos = sum(f.pontos for f in meus_fos if f.sinal == "NEGATIVO")
+        saldo_pessoal = positivos - negativos
+
+    return render_template(
+        "fo/dashboard.html",
+        total_militares=total_militares,
+        total_fos=total_fos,
+        pendentes=pendentes,
+        publicados=publicados,
+        ultimos_fos=ultimos_fos,
+        meus_fos=meus_fos,
+        saldo_pessoal=saldo_pessoal
+    )

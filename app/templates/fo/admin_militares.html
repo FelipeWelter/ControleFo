@@ -21,6 +21,7 @@
                 <th>Nome de Guerra</th>
                 <th>Identidade</th>
                 <th>Seção</th>
+                <th>Status</th>
                 <th></th>
             </tr>
         </thead>
@@ -32,6 +33,13 @@
                 <td>{{ militar.nome_guerra }}</td>
                 <td>{{ militar.identidade_militar }}</td>
                 <td>{{ militar.secao.nome if militar.secao else "-" }}</td>
+                <td>
+                {% if militar.ativo %}
+                <span class="badge bg-success">Ativo</span>
+                {% else %}
+                <span class="badge bg-secondary">Inativo</span>
+                {% endif %}
+                </td>
                 <td class="text-end">
                     <a href="{{ url_for('fo.admin_militar_editar', militar_id=militar.id) }}"
                        class="btn btn-sm btn-warning">

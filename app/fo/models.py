@@ -36,6 +36,8 @@ class Militar(db.Model):
 
     foto_url = db.Column(db.String(255), nullable=True)
 
+    ativo = db.Column(db.Boolean, default=True, nullable=False)
+
     posto_graduacao = db.relationship("PostoGraduacao")
     secao = db.relationship("Secao")
 
