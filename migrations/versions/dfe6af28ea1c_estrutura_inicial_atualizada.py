@@ -54,14 +54,14 @@ def upgrade():
     sa.Column('username', sa.String(length=80), nullable=False),
     sa.Column('senha_hash', sa.String(length=128), nullable=False),
     sa.Column('nivel_permissao', sa.Integer(), nullable=False),
-    sa.Column('militar_id', sa.Integer(), nullable=False),
+    sa.Column('militar_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['militar_id'], ['militares.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username')
     )
     op.create_table('fatos_observados',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('militar_id', sa.Integer(), nullable=False),
+    sa.Column('militar_id', sa.Integer(), nullable=True),
     sa.Column('cadastrador_id', sa.Integer(), nullable=False),
     sa.Column('homologador_id', sa.Integer(), nullable=True),
     sa.Column('tipo_de_fato_id', sa.Integer(), nullable=False),

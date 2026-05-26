@@ -9,7 +9,8 @@ from .models import TipoDeFato, FatoObservado
 from .permissions import (
     requer_homologador,
     requer_admin,
-    perfil_permitido
+    perfil_permitido,
+    requer_lancador
 )
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
 from flask import Response
@@ -19,6 +20,7 @@ from datetime import datetime
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
 @login_required
+@requer_lancador
 def novo_fo():
     if request.method == "POST":
         militar_id = request.form.get("militar_id", type=int)
@@ -27,18 +29,21 @@ def novo_fo():
 
         militar = Militar.query.get_or_404(militar_id)
         tipo_fato = TipoDeFato.query.filter_by(id=tipo_fato_id, ativo=True).first_or_404()
-        
-        criar_fato_observado(
+
+        fato = criar_fato_observado(
             usuario_logado=current_user,
             militar_alvo=militar,
             tipo_fato=tipo_fato,
             descricao=descricao
         )
 
-        flash("FO registrado com sucesso e enviado para homologação.", "success")
-        return redirect(url_for("index"))
+        if not fato:
+            return redirect(url_for("fo.novo_fo"))
 
-    tipos = TipoDeFato.query.filter_by(ativo=True).order_by(TipoDeFato.nome).all()
+        flash("FO registrado com sucesso e enviado para homologação.", "success")
+        return redirect(url_for("fo.novo_fo"))
+
+    tipos = TipoDeFato.query.filter_by(ativo=True).order_by(TipoDeFato.nome.asc()).all()
     return render_template("fo/lancar_fo.html", tipos=tipos)
 
 @fo_bp.route("/api/militares")
@@ -193,13 +198,13 @@ def ranking():
         negativos = item.pontos_negativos or 0
         saldo = positivos - negativos
 
-        if saldo > 100:
+        if saldo > 10:
             conceito = "Excelente"
             badge = "primary"
-        elif 51 <= saldo <= 100:
+        elif 5 <= saldo <= 10:
             conceito = "Muito Bom"
             badge = "success"
-        elif 0 <= saldo <= 50:
+        elif 0 <= saldo <= 5:
             conceito = "Bom"
             badge = "warning"
         else:
@@ -343,7 +348,7 @@ def admin_militar_novo():
         usuario = Usuario(
             username=identidade,
             senha_hash=generate_password_hash(identidade),
-            perfil="MILITAR",
+            perfil="USUARIO",
             militar_id=militar.id
         )
 

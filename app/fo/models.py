@@ -56,13 +56,13 @@ class Usuario(db.Model, UserMixin):
     perfil = db.Column(
         db.String(20),
         nullable=False,
-        default="MILITAR"
+        default="USUARIO"
     )
     
     militar_id = db.Column(
         db.Integer,
         db.ForeignKey("militares.id", ondelete="RESTRICT"),
-        nullable=False
+        nullable=True
     )
 
     militar = db.relationship("Militar")
@@ -87,8 +87,8 @@ class FatoObservado(db.Model):
 
     militar_id = db.Column(
         db.Integer,
-        db.ForeignKey("militares.id", ondelete="RESTRICT"),
-        nullable=False
+        db.ForeignKey("militares.id"),
+        nullable=True
     )
 
     cadastrador_id = db.Column(

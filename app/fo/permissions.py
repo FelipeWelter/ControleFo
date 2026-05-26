@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import abort
+from flask import abort, flash, redirect, url_for, request
 from flask_login import current_user
 
 
@@ -8,10 +8,16 @@ def perfil_permitido(*perfis):
         @wraps(func)
         def wrapper(*args, **kwargs):
             if not current_user.is_authenticated:
-                abort(403)
+                flash("Faça login para acessar o sistema.", "warning")
+                return redirect(url_for("auth.login"))
 
             if current_user.perfil not in perfis and current_user.perfil != "ADMIN":
-                abort(403)
+                flash("Você não possui permissão para acessar esta área.", "danger")
+
+                if request.referrer:
+                    return redirect(request.referrer)
+
+                return redirect(url_for("index"))
 
             return func(*args, **kwargs)
 
@@ -34,6 +40,9 @@ def requer_boletim(func):
 
 def requer_cadastrador(func):
     return perfil_permitido("CADASTRADOR")(func)
+
+def requer_lancador(func):
+    return perfil_permitido("LANCADOR", "HOMOLOGADOR")(func)
 
 
 def pode_lancar_fo_para(cadastrador, militar_alvo):

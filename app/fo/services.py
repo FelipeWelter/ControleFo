@@ -2,12 +2,13 @@ from datetime import datetime
 from app.extensions import db
 from .models import FatoObservado, HistoricoEdicaoFO
 from .permissions import pode_lancar_fo_para
-from flask import abort
+from flask import abort, flash
 
 def criar_fato_observado(usuario_logado, militar_alvo, tipo_fato, descricao):
     if not pode_lancar_fo_para(usuario_logado, militar_alvo):
-        abort(403, description="Você não possui permissão hierárquica para lançar FO para este militar.")
-    
+        flash("Você não possui permissão hierárquica para lançar FO para este militar.", "danger")
+    return None
+
     if not descricao or not descricao.strip():
         abort(400, description="A descrição do fato observado é obrigatória.")
 

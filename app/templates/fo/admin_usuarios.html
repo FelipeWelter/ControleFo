@@ -37,14 +37,16 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if usuario.perfil == "MILITAR" %}
-                        <span class="badge bg-secondary">Lançador</span>
+                    {% if usuario.perfil == "USUARIO" %}
+                        <span class="badge bg-secondary">Usuário</span>
+                    {% elif usuario.perfil == "LANCADOR" %}
+                        <span class="badge bg-success">Lançador</span>
                     {% elif usuario.perfil == "CADASTRADOR" %}
                         <span class="badge bg-primary">Cadastrador</span>
                     {% elif usuario.perfil == "BOLETIM" %}
                         <span class="badge bg-info">Boletim</span>
                     {% elif usuario.perfil == "HOMOLOGADOR" %}
-                        <span class="badge bg-warning">Homologador</span>
+                        <span class="badge bg-warning text-dark">Homologador</span>
                     {% elif usuario.perfil == "ADMIN" %}
                         <span class="badge bg-dark">Administrador</span>
                     {% else %}

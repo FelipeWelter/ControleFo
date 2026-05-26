@@ -25,10 +25,10 @@ def upgrade():
     op.execute("""
         UPDATE usuarios
         SET perfil = CASE
-            WHEN nivel_permissao = 1 THEN 'MILITAR'
+            WHEN nivel_permissao = 1 THEN 'USUARIO'
             WHEN nivel_permissao = 2 THEN 'HOMOLOGADOR'
             WHEN nivel_permissao = 3 THEN 'ADMIN'
-            ELSE 'MILITAR'
+            ELSE 'USUARIO'
         END
     """)
 

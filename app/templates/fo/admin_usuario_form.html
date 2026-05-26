@@ -39,25 +39,37 @@
             <label class="form-label">Nível de Permissão</label>
 
             <select name="perfil" class="form-select" required>
-                <option value="MILITAR" {% if usuario and usuario.perfil == "MILITAR" %}selected{% endif %}>
-                    Militar - Consulta pessoal
+
+                <option value="USUARIO"
+                    {% if usuario and usuario.perfil == "USUARIO" %}selected{% endif %}>
+                    Usuário - Consulta pessoal
                 </option>
 
-                <option value="CADASTRADOR" {% if usuario and usuario.perfil == "CADASTRADOR" %}selected{% endif %}>
+                <option value="LANCADOR"
+                    {% if usuario and usuario.perfil == "LANCADOR" %}selected{% endif %}>
+                    Lançador - Lançamento de FO
+                </option>
+
+                <option value="CADASTRADOR"
+                    {% if usuario and usuario.perfil == "CADASTRADOR" %}selected{% endif %}>
                     Cadastrador - Cadastro de militares
                 </option>
 
-                <option value="BOLETIM" {% if usuario and usuario.perfil == "BOLETIM" %}selected{% endif %}>
-                     Boletim - Exportação BI
+                <option value="BOLETIM"
+                    {% if usuario and usuario.perfil == "BOLETIM" %}selected{% endif %}>
+                    Boletim - Exportação BI
                 </option>
 
-                <option value="HOMOLOGADOR" {% if usuario and usuario.perfil == "HOMOLOGADOR" %}selected{% endif %}>
+                <option value="HOMOLOGADOR"
+                    {% if usuario and usuario.perfil == "HOMOLOGADOR" %}selected{% endif %}>
                     Homologador - Aprovação de FO
                 </option>
 
-                <option value="ADMIN" {% if usuario and usuario.perfil == "ADMIN" %}selected{% endif %}>
+                <option value="ADMIN"
+                    {% if usuario and usuario.perfil == "ADMIN" %}selected{% endif %}>
                     Administrador - Acesso total
                 </option>
+
             </select>
         </div>
 

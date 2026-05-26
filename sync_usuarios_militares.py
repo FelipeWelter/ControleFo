@@ -22,7 +22,7 @@ with app.app_context():
         usuario = Usuario(
             username=militar.identidade_militar,
             senha_hash=generate_password_hash(militar.identidade_militar),
-            perfil="MILITAR",
+            perfil="USUARIO",
             militar_id=militar.id
         )
 

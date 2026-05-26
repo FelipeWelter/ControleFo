@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Erro {{ codigo }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card card-glass p-5 text-center">
+
+            <div class="mb-3">
+                <span class="badge bg-danger fs-6">
+                    Erro {{ codigo }}
+                </span>
+            </div>
+
+            <h2 class="mb-3">
+                {{ titulo }}
+            </h2>
+
+            <p class="text-muted mb-4">
+                {{ mensagem }}
+            </p>
+
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+
+                <a href="{{ url_for('index') }}"
+                   class="btn btn-primary">
+                    Ir para o início
+                </a>
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        onclick="history.back()">
+                    Voltar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
