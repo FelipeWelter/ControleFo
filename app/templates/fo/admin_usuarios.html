@@ -52,10 +52,35 @@
                     {% endif %}
                 </td>
                 <td class="text-end">
-                    <a href="{{ url_for('fo.admin_usuario_editar', usuario_id=usuario.id) }}"
-                       class="btn btn-sm btn-warning">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('fo.admin_usuario_editar', usuario_id=usuario.id) }}"
+                        class="btn btn-sm btn-warning">
                         Editar
-                    </a>
+                        </a>
+                        {% if usuario.militar %}
+                        <form method="POST"
+                            action="{{ url_for('fo.admin_usuario_resetar_senha', usuario_id=usuario.id) }}"
+                            onsubmit="return confirm('Resetar a senha deste usuário para a identidade militar?');">
+
+                            <button class="btn btn-sm btn-secondary">
+                                Resetar Senha
+                            </button>
+
+                        </form>
+                        {% endif %}
+
+                        {% if usuario.id != current_user.id %}
+                        <form method="POST"
+                            action="{{ url_for('fo.admin_usuario_excluir', usuario_id=usuario.id) }}"
+                            onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
+
+                            <button class="btn btn-sm btn-danger">
+                            Excluir
+                            </button>
+
+                        </form>
+                    {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}

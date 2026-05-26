@@ -35,7 +35,7 @@ def novo_fo():
         )
 
         flash("FO registrado com sucesso e enviado para homologação.", "success")
-        return redirect(url_for("fo.novo_fo"))
+        return redirect(url_for("index"))
 
     tipos = TipoDeFato.query.filter_by(ativo=True).order_by(TipoDeFato.nome).all()
     return render_template("fo/lancar_fo.html", tipos=tipos)
@@ -314,23 +314,41 @@ def admin_militar_novo():
     secoes = Secao.query.order_by(Secao.nome.asc()).all()
 
     if request.method == "POST":
+        identidade = request.form.get("identidade_militar")
+
+        militar_existente = Militar.query.filter_by(
+            identidade_militar=identidade
+        ).first()
+
+        if militar_existente:
+            flash("Já existe um militar cadastrado com essa identidade militar.", "danger")
+            return redirect(url_for("fo.admin_militar_novo"))
+
         militar = Militar(
             nome_guerra=request.form.get("nome_guerra"),
-            identidade_militar=request.form.get("identidade_militar"),
+            identidade_militar=identidade,
             id_posto_graduacao=request.form.get("id_posto_graduacao", type=int),
-
             data_de_praca=datetime.strptime(
                 request.form.get("data_de_praca"),
                 "%Y-%m-%d"
             ).date(),
-
-            id_secao=request.form.get("id_secao", type=int),
+            id_secao=request.form.get("id_secao", type=int)
         )
 
         db.session.add(militar)
+        db.session.flush()  # Para garantir que o ID seja gerado antes de criar o usuário
+
+        usuario = Usuario(
+            username=identidade,
+            senha_hash=generate_password_hash(identidade),
+            perfil="MILITAR",
+            militar_id=militar.id
+        )
+
+        db.session.add(usuario)
         db.session.commit()
 
-        flash("Militar cadastrado com sucesso.", "success")
+        flash("Militar e usuário associados cadastrados com sucesso.", "success")
         return redirect(url_for("fo.admin_militares"))
 
     return render_template(
@@ -339,7 +357,6 @@ def admin_militar_novo():
         postos=postos,
         secoes=secoes
     )
-
 
 @fo_bp.route("/admin/militares/<int:militar_id>/editar", methods=["GET", "POST"])
 @login_required
@@ -350,16 +367,26 @@ def admin_militar_editar(militar_id):
     secoes = Secao.query.order_by(Secao.nome.asc()).all()
 
     if request.method == "POST":
+        
+        identidade_antiga = militar.identidade_militar
+        nova_identidade = request.form.get("identidade_militar")
         militar.nome_guerra = request.form.get("nome_guerra")
-        militar.identidade_militar = request.form.get("identidade_militar")
+        militar.identidade_militar = nova_identidade
         militar.id_posto_graduacao = request.form.get("id_posto_graduacao", type=int)
-
+        
         militar.data_de_praca = datetime.strptime(
             request.form.get("data_de_praca"),
             "%Y-%m-%d"
         ).date()
 
         militar.id_secao = request.form.get("id_secao", type=int)
+
+        usuario_vinculado = Usuario.query.filter_by(
+            militar_id=militar.id
+        ).first()
+
+        if usuario_vinculado and usuario_vinculado.username == identidade_antiga:
+            usuario_vinculado.username = nova_identidade
 
         db.session.commit()
 
@@ -526,3 +553,39 @@ def meu_historico():
         total_negativo=total_negativo,
         saldo=saldo
     )
+
+@fo_bp.route("/admin/usuarios/<int:usuario_id>/resetar-senha", methods=["POST"])
+@login_required
+@requer_admin
+def admin_usuario_resetar_senha(usuario_id):
+    usuario = Usuario.query.get_or_404(usuario_id)
+
+    if not usuario.militar:
+        flash("Este usuário não possui militar vinculado.", "warning")
+        return redirect(url_for("fo.admin_usuarios"))
+
+    usuario.senha_hash = generate_password_hash(
+        usuario.militar.identidade_militar
+    )
+
+    db.session.commit()
+
+    flash("Senha resetada para a identidade militar.", "success")
+    return redirect(url_for("fo.admin_usuarios"))
+
+
+@fo_bp.route("/admin/usuarios/<int:usuario_id>/excluir", methods=["POST"])
+@login_required
+@requer_admin
+def admin_usuario_excluir(usuario_id):
+    usuario = Usuario.query.get_or_404(usuario_id)
+
+    if usuario.id == current_user.id:
+        flash("Você não pode excluir o próprio usuário logado.", "danger")
+        return redirect(url_for("fo.admin_usuarios"))
+
+    db.session.delete(usuario)
+    db.session.commit()
+
+    flash("Usuário excluído com sucesso.", "success")
+    return redirect(url_for("fo.admin_usuarios"))
