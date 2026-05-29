@@ -5,6 +5,8 @@ from app.extensions import db
 from app.fo.models import Militar
 from . import fo_bp
 from .models import TipoDeFato, FatoObservado
+from .models import Auditoria
+from .auditoria import registrar_auditoria
 
 from .permissions import (
     requer_homologador,
@@ -39,7 +41,6 @@ def novo_fo():
 
         if not fato:
             return redirect(url_for("fo.novo_fo"))
-
         flash("FO registrado com sucesso e enviado para homologação.", "success")
         return redirect(url_for("fo.novo_fo"))
 
@@ -242,7 +243,7 @@ def ranking():
 
 @fo_bp.route("/exportar-bi", methods=["POST"])
 @login_required
-@perfil_permitido("BOLETIM")
+@perfil_permitido("BOLETIM", "HOMOLOGADOR")
 def exportar_bi():
     ids = request.form.getlist("fo_ids")
 
@@ -258,14 +259,16 @@ def exportar_bi():
     linhas = []
 
     for fato in fatos:
-        modelo = fato.tipo_fato.texto_boletim or fato.descricao.strip()
+        modelo = fato.tipo_fato.texto_boletim or fato.tipo_fato.nome
         descricao = fato.descricao.strip() if fato.descricao else ""
-        
-        try:
+
+        if "{descricao}" in modelo:
             complemento = modelo.format(descricao=descricao)
-        except KeyError:
+        else:
             complemento = modelo
-                
+            if descricao:
+                complemento = f"{complemento} {descricao}"
+
         texto = (
             f"O {fato.cadastrador.militar.posto_graduacao.nome} "
             f"{fato.cadastrador.militar.nome_guerra} observa que o "
@@ -345,6 +348,14 @@ def admin_militar_novo():
         db.session.add(militar)
         db.session.flush()  # Para garantir que o ID seja gerado antes de criar o usuário
 
+        registrar_auditoria(
+            usuario=current_user,
+            acao="CADASTRAR_MILITAR",
+            entidade="Militar",
+            entidade_id=militar.id,
+            detalhes=f"Militar cadastrado: {militar.nome_guerra}"
+        )
+
         usuario = Usuario(
             username=identidade,
             senha_hash=generate_password_hash(identidade),
@@ -395,6 +406,14 @@ def admin_militar_editar(militar_id):
 
         if usuario_vinculado and usuario_vinculado.username == identidade_antiga:
             usuario_vinculado.username = nova_identidade
+
+        registrar_auditoria(
+            usuario=current_user,
+            acao="EDITAR_MILITAR",
+            entidade="Militar",
+            entidade_id=militar.id,
+            detalhes=f"Militar atualizado: {militar.nome_guerra}"
+        )
 
         db.session.commit()
 
@@ -576,6 +595,14 @@ def admin_usuario_resetar_senha(usuario_id):
         usuario.militar.identidade_militar
     )
 
+    registrar_auditoria(
+        usuario=current_user,
+        acao="RESETAR_SENHA",
+        entidade="Usuario",
+        entidade_id=usuario.id,
+        detalhes=f"Senha resetada para: {usuario.username}"
+    )
+
     db.session.commit()
 
     flash("Senha resetada para a identidade militar.", "success")
@@ -636,4 +663,17 @@ def dashboard():
         ultimos_fos=ultimos_fos,
         meus_fos=meus_fos,
         saldo_pessoal=saldo_pessoal
+    )
+
+@fo_bp.route("/admin/auditoria")
+@login_required
+@requer_admin
+def admin_auditoria():
+    auditorias = Auditoria.query.order_by(
+        Auditoria.data_hora.desc()
+    ).limit(200).all()
+
+    return render_template(
+        "fo/admin_auditoria.html",
+        auditorias=auditorias
     )

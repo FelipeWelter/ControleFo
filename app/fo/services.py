@@ -3,14 +3,14 @@ from app.extensions import db
 from .models import FatoObservado, HistoricoEdicaoFO
 from .permissions import pode_lancar_fo_para
 from flask import abort, flash
+from .auditoria import registrar_auditoria
 
 def criar_fato_observado(usuario_logado, militar_alvo, tipo_fato, descricao):
     if not pode_lancar_fo_para(usuario_logado, militar_alvo):
         flash("Você não possui permissão hierárquica para lançar FO para este militar.", "danger")
-    return None
+        return None
 
-    if not descricao or not descricao.strip():
-        abort(400, description="A descrição do fato observado é obrigatória.")
+    descricao = descricao.strip() if descricao else ""
 
     fato = FatoObservado(
         militar_id=militar_alvo.id,
@@ -18,13 +18,22 @@ def criar_fato_observado(usuario_logado, militar_alvo, tipo_fato, descricao):
         tipo_de_fato_id=tipo_fato.id,
         sinal=tipo_fato.sinal,
         pontos=1,
-        descricao=descricao.strip(),
+        descricao=descricao,
         status="Pendente",
         data_registro=datetime.utcnow()
     )
 
     db.session.add(fato)
-    db.session.flush()  # Para obter o ID do fato antes de salvar as evidências
+    db.session.flush()
+
+    registrar_auditoria(
+        usuario_logado,
+        "CRIAR_FO",
+        "FatoObservado",
+        fato.id,
+        detalhes=f"FO criada para {militar_alvo.nome_guerra}"
+    )
+
     db.session.commit()
     return fato
 
@@ -32,6 +41,13 @@ def aprovar_fato(fato, homologador):
     fato.status = "Publicado"
     fato.homologador_id = homologador.id
     fato.data_homologacao = datetime.utcnow()
+    registrar_auditoria(
+    usuario=homologador,
+    acao="HOMOLOGAR_FO",
+    entidade="FatoObservado",
+    entidade_id=fato.id,
+    detalhes=f"FO homologada"
+    )
     db.session.commit()
     return fato
 
@@ -43,14 +59,19 @@ def recusar_fato(fato, homologador, justificativa):
     fato.homologador_id = homologador.id
     fato.justificativa_recusa = justificativa.strip()
     fato.data_homologacao = datetime.utcnow()
+    registrar_auditoria(
+    usuario=homologador,
+    acao="RECUSAR_FO",
+    entidade="FatoObservado",
+    entidade_id=fato.id,
+    detalhes=justificativa
+    )
     db.session.commit()
     return fato
 
 def editar_fato(fato, editor, nova_descricao):
-    if not nova_descricao or not nova_descricao.strip():
-        abort(400, description="A nova descrição do fato observado é obrigatória.")
     
-    nova_descricao = nova_descricao.strip()
+    nova_descricao = nova_descricao.strip() if nova_descricao else ""
 
     if fato.descricao != nova_descricao:
         historico = HistoricoEdicaoFO(
@@ -61,6 +82,12 @@ def editar_fato(fato, editor, nova_descricao):
         )
         db.session.add(historico)
         fato.descricao = nova_descricao
-    
+    registrar_auditoria(
+        usuario=editor,
+        acao="EDITAR_FO",
+        entidade="FatoObservado",
+        entidade_id=fato.id,
+        detalhes="FO editada"
+    )
     db.session.commit()
     return fato

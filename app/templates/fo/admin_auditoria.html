@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Auditoria{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Auditoria do Sistema</h2>
+        <small class="text-muted">
+            Últimos registros administrativos e operacionais
+        </small>
+    </div>
+</div>
+
+<div class="card card-glass p-4">
+
+    {% if auditorias %}
+
+    <div class="table-responsive">
+
+        <table class="table table-hover align-middle">
+
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Usuário</th>
+                    <th>Ação</th>
+                    <th>Entidade</th>
+                    <th>ID</th>
+                    <th>IP</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for item in auditorias %}
+
+                <tr>
+                    <td>
+                        {{ item.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}
+                    </td>
+
+                    <td>
+                        {{ item.usuario.username if item.usuario else "-" }}
+                    </td>
+
+                    <td>
+                        <span class="badge bg-dark">
+                            {{ item.acao }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{ item.entidade }}
+                    </td>
+
+                    <td>
+                        {{ item.entidade_id if item.entidade_id else "-" }}
+                    </td>
+
+                    <td>
+                        {{ item.ip if item.ip else "-" }}
+                    </td>
+
+                    <td>
+                        {{ item.detalhes if item.detalhes else "-" }}
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-info mb-0">
+        Nenhum registro de auditoria encontrado.
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

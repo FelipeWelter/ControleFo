@@ -2,6 +2,7 @@ from datetime import datetime
 from app.extensions import db
 from flask_login import UserMixin
 
+
 class PostoGraduacao(db.Model):
     __tablename__ = 'posto_graduacao'
 
@@ -150,3 +151,28 @@ class HistoricoEdicaoFO(db.Model):
 
     fato = db.relationship("FatoObservado")
     editor = db.relationship("Usuario")
+
+class Auditoria(db.Model):
+    __tablename__ = "auditoria"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    usuario_id = db.Column(
+        db.Integer,
+        db.ForeignKey("usuarios.id"),
+        nullable=False
+    )
+
+    acao = db.Column(db.String(100), nullable=False)
+    entidade = db.Column(db.String(100), nullable=False)
+    entidade_id = db.Column(db.Integer, nullable=True)
+    ip = db.Column(db.String(50), nullable=True)
+    detalhes = db.Column(db.Text, nullable=True)
+
+    data_hora = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    usuario = db.relationship("Usuario")

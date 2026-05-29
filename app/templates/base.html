@@ -41,6 +41,58 @@
             border-left: 6px solid #dc3545;
         }
         
+        @media (max-width: 768px) {
+            body {
+                font-size: 0.95rem;
+            }
+
+            .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .card-glass {
+                border-radius: 12px;
+                padding: 1rem !important;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .nav-link {
+                padding: 0.7rem 0;
+                border-bottom: 1px solid rgba(255,255,255,0.15);
+            }
+
+            .table {
+                font-size: 0.85rem;
+            }
+
+            .table th,
+            .table td {
+                white-space: nowrap;
+            }
+
+            .btn {
+                margin-bottom: 4px;
+            }
+
+            .d-flex.gap-2 {
+                flex-wrap: wrap;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            h3 {
+                font-size: 1.2rem;
+            }
+        }
+
+
     </style>
 
     {% block extra_head %}{% endblock %}
@@ -134,6 +186,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('fo.admin_usuarios') }}">
                             Usuários
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('fo.admin_auditoria') }}">
+                            Auditoria
                         </a>
                     </li>
                 {% endif %}
