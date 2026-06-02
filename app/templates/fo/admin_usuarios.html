@@ -37,21 +37,23 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if usuario.perfil == "USUARIO" %}
-                        <span class="badge bg-secondary">Usuário</span>
-                    {% elif usuario.perfil == "LANCADOR" %}
-                        <span class="badge bg-success">Lançador</span>
-                    {% elif usuario.perfil == "CADASTRADOR" %}
-                        <span class="badge bg-primary">Cadastrador</span>
-                    {% elif usuario.perfil == "BOLETIM" %}
-                        <span class="badge bg-info">Boletim</span>
-                    {% elif usuario.perfil == "HOMOLOGADOR" %}
-                        <span class="badge bg-warning text-dark">Homologador</span>
-                    {% elif usuario.perfil == "ADMIN" %}
-                        <span class="badge bg-dark">Administrador</span>
-                    {% else %}
-                        <span class="badge bg-light text-dark">{{ usuario.perfil }}</span>
-                    {% endif %}
+                    {% set permissoes = usuario.permissoes.split(',') if usuario.permissoes else [] %}
+
+{% for permissao in permissoes %}
+    {% if permissao == "USUARIO" %}
+        <span class="badge bg-secondary">Usuário</span>
+    {% elif permissao == "LANCADOR" %}
+        <span class="badge bg-success">Lançador</span>
+    {% elif permissao == "CADASTRADOR" %}
+        <span class="badge bg-primary">Cadastrador</span>
+    {% elif permissao == "BOLETIM" %}
+        <span class="badge bg-info">Boletim</span>
+    {% elif permissao == "HOMOLOGADOR" %}
+        <span class="badge bg-warning text-dark">Homologador</span>
+    {% elif permissao == "ADMIN" %}
+        <span class="badge bg-dark">Administrador</span>
+    {% endif %}
+{% endfor %}
                 </td>
                 <td class="text-end">
                     <div class="d-flex justify-content-end gap-2">

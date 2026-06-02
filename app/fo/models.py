@@ -54,8 +54,8 @@ class Usuario(db.Model, UserMixin):
     # nivel_permissao = db.Column(db.Integer, default=1, nullable=False) # "Cadastrador", "Homologador", "Administrador"
 ##################################
 
-    perfil = db.Column(
-        db.String(20),
+    permissoes = db.Column(
+        db.Text,
         nullable=False,
         default="USUARIO"
     )

@@ -158,7 +158,7 @@
                     </a>
                 </li>
 
-                {% if current_user.perfil in ["USUARIO", "LANCADOR", "ADMIN"] %}
+                {% if "USUARIO" in current_user.permissoes or "LANCADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.meu_historico') }}">
                         Meu Histórico
@@ -166,7 +166,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.perfil in ["LANCADOR", "HOMOLOGADOR", "ADMIN"] %}
+                {% if "LANCADOR" in current_user.permissoes or "HOMOLOGADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.novo_fo') }}">
                         Novo FO
@@ -174,7 +174,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.perfil in ["HOMOLOGADOR", "ADMIN"] %}
+                {% if "HOMOLOGADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes     %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.homologacao') }}">
                         Homologação
@@ -182,7 +182,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.perfil in ["USUARIO", "LANCADOR", "HOMOLOGADOR", "ADMIN"] %}
+                {% if "USUARIO" in current_user.permissoes or "LANCADOR" in current_user.permissoes or "HOMOLOGADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.ranking') }}">
                         Ranking
@@ -190,7 +190,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.perfil in ["BOLETIM", "HOMOLOGADOR", "ADMIN"] %}
+                {% if "BOLETIM" in current_user.permissoes or "HOMOLOGADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.exportacao') }}">
                         Exportação BI
@@ -198,7 +198,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.perfil in ["CADASTRADOR", "ADMIN"] %}
+                {% if "CADASTRADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.admin_militares') }}">
                         Militares
@@ -206,7 +206,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.perfil == "ADMIN" %}
+                {% if "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.admin_tipos') }}">
                         Tipos
@@ -231,7 +231,7 @@
             <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
 
                 <span class="navbar-text small text-white-50 d-none d-xl-inline">
-                    {{ current_user.username }} | {{ current_user.perfil }}
+                    {{ current_user.username }}
                 </span>
 
                 <a class="btn btn-outline-light btn-sm"

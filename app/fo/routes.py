@@ -11,7 +11,7 @@ from .auditoria import registrar_auditoria
 from .permissions import (
     requer_homologador,
     requer_admin,
-    perfil_permitido,
+    permissao_requerida,
     requer_lancador
 )
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
@@ -251,7 +251,7 @@ def ranking():
 
 @fo_bp.route("/exportar-bi", methods=["POST"])
 @login_required
-@perfil_permitido("BOLETIM", "HOMOLOGADOR")
+@permissao_requerida("BOLETIM", "HOMOLOGADOR")
 def exportar_bi():
     ids = request.form.getlist("fo_ids")
 
@@ -298,7 +298,7 @@ def exportar_bi():
 
 @fo_bp.route("/exportacao")
 @login_required
-@perfil_permitido("BOLETIM")
+@permissao_requerida("BOLETIM")
 def exportacao():
 
     fatos = FatoObservado.query.filter_by(
@@ -318,7 +318,7 @@ def exportacao():
 
 @fo_bp.route("/admin/militares")
 @login_required
-@perfil_permitido("CADASTRADOR")
+@permissao_requerida("CADASTRADOR")
 def admin_militares():
     militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
     return render_template("fo/admin_militares.html", militares=militares)
@@ -326,7 +326,7 @@ def admin_militares():
 
 @fo_bp.route("/admin/militares/novo", methods=["GET", "POST"])
 @login_required
-@perfil_permitido("CADASTRADOR")
+@permissao_requerida("CADASTRADOR")
 def admin_militar_novo():
     postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
     secoes = Secao.query.order_by(Secao.nome.asc()).all()
@@ -367,7 +367,7 @@ def admin_militar_novo():
         usuario = Usuario(
             username=identidade,
             senha_hash=generate_password_hash(identidade),
-            perfil="USUARIO",
+            permissoes="USUARIO",
             militar_id=militar.id
         )
 
@@ -386,7 +386,7 @@ def admin_militar_novo():
 
 @fo_bp.route("/admin/militares/<int:militar_id>/editar", methods=["GET", "POST"])
 @login_required
-@perfil_permitido("CADASTRADOR")
+@permissao_requerida("CADASTRADOR")
 def admin_militar_editar(militar_id):
     militar = Militar.query.get_or_404(militar_id)
     postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
@@ -442,7 +442,7 @@ def admin_militar_editar(militar_id):
 
 @fo_bp.route("/admin/tipos")
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_tipos():
     tipos = TipoDeFato.query.order_by(TipoDeFato.nome.asc()).all()
     return render_template("fo/admin_tipos.html", tipos=tipos)
@@ -450,7 +450,7 @@ def admin_tipos():
 
 @fo_bp.route("/admin/tipos/novo", methods=["GET", "POST"])
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_tipo_novo():
     if request.method == "POST":
         tipo = TipoDeFato(
@@ -472,7 +472,7 @@ def admin_tipo_novo():
 
 @fo_bp.route("/admin/tipos/<int:tipo_id>/editar", methods=["GET", "POST"])
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_tipo_editar(tipo_id):
     tipo = TipoDeFato.query.get_or_404(tipo_id)
 
@@ -497,7 +497,7 @@ def admin_tipo_editar(tipo_id):
 
 @fo_bp.route("/admin/usuarios")
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_usuarios():
     usuarios = Usuario.query.order_by(Usuario.username.asc()).all()
     return render_template("fo/admin_usuarios.html", usuarios=usuarios)
@@ -505,7 +505,7 @@ def admin_usuarios():
 
 @fo_bp.route("/admin/usuarios/novo", methods=["GET", "POST"])
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_usuario_novo():
     militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
 
@@ -513,7 +513,7 @@ def admin_usuario_novo():
         usuario = Usuario(
             username=request.form.get("username"),
             senha_hash=generate_password_hash(request.form.get("senha")),
-            perfil=request.form.get("perfil"),
+            permissoes=",".join(request.form.getlist("permissoes")),
             militar_id=request.form.get("militar_id", type=int)
         )
 
@@ -532,14 +532,14 @@ def admin_usuario_novo():
 
 @fo_bp.route("/admin/usuarios/<int:usuario_id>/editar", methods=["GET", "POST"])
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_usuario_editar(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
     militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
 
     if request.method == "POST":
         usuario.username = request.form.get("username")
-        usuario.perfil = request.form.get("perfil")
+        usuario.permissoes = ",".join(request.form.getlist("permissoes"))
         usuario.militar_id = request.form.get("militar_id", type=int)
 
         nova_senha = request.form.get("senha")
@@ -591,7 +591,7 @@ def meu_historico():
 
 @fo_bp.route("/admin/usuarios/<int:usuario_id>/resetar-senha", methods=["POST"])
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_usuario_resetar_senha(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
 
@@ -619,7 +619,7 @@ def admin_usuario_resetar_senha(usuario_id):
 
 @fo_bp.route("/admin/usuarios/<int:usuario_id>/excluir", methods=["POST"])
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_usuario_excluir(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
 
@@ -692,7 +692,7 @@ def dashboard():
 
 @fo_bp.route("/admin/auditoria")
 @login_required
-@requer_admin
+@permissao_requerida("ADMIN")
 def admin_auditoria():
     auditorias = Auditoria.query.order_by(
         Auditoria.data_hora.desc()
