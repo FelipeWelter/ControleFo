@@ -150,6 +150,7 @@ def editar(fato_id):
 def ranking():
     periodo = request.args.get("periodo", "mes")
     secao_id = request.args.get("secao_id", type=int)
+    posto_id = request.args.get("posto_id", type=int)
 
     query = db.session.query(
         Militar.id.label("militar_id"),
@@ -182,6 +183,9 @@ def ranking():
     if secao_id:
         query = query.filter(Militar.id_secao == secao_id)
     
+    if posto_id:
+        query = query.filter(Militar.id_posto_graduacao == posto_id)
+
     query = query.group_by(
         Militar.id,
         Militar.nome_guerra,
@@ -234,12 +238,16 @@ def ranking():
     )
 
     secoes = Secao.query.order_by(Secao.nome.asc()).all()
+    postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
     return render_template(
         "fo/ranking.html",
         ranking=ranking_lista,
         periodo=periodo,
-        secoes=secoes
-        )
+        secoes=secoes,
+        postos=postos,
+        secao_id=secao_id,
+        posto_id=posto_id
+    )
 
 @fo_bp.route("/exportar-bi", methods=["POST"])
 @login_required
@@ -630,16 +638,32 @@ def admin_usuario_excluir(usuario_id):
 def dashboard():
 
     total_militares = Militar.query.count()
-    total_fos = FatoObservado.query.count()
-    pendentes = FatoObservado.query.filter_by(status="Pendente").count()
-    publicados = FatoObservado.query.filter_by(status="Publicado").count()
 
-    ultimos_fos = FatoObservado.query.order_by(
+    pendentes = FatoObservado.query.filter_by(
+        status="Pendente"
+    ).count()
+
+    publicados = FatoObservado.query.filter_by(
+        status="Publicado"
+    ).count()
+
+    total_positivos = FatoObservado.query.filter_by(
+        status="Publicado",
+        sinal="POSITIVO"
+    ).count()
+
+    total_negativos = FatoObservado.query.filter_by(
+        status="Publicado",
+        sinal="NEGATIVO"
+    ).count()
+
+    ultimos_fos = FatoObservado.query.filter(
+        FatoObservado.status != "Recusado"
+    ).order_by(
         FatoObservado.data_registro.desc()
     ).limit(5).all()
 
     meus_fos = []
-
     saldo_pessoal = 0
 
     if current_user.militar_id:
@@ -657,9 +681,10 @@ def dashboard():
     return render_template(
         "fo/dashboard.html",
         total_militares=total_militares,
-        total_fos=total_fos,
         pendentes=pendentes,
         publicados=publicados,
+        total_positivos=total_positivos,
+        total_negativos=total_negativos,
         ultimos_fos=ultimos_fos,
         meus_fos=meus_fos,
         saldo_pessoal=saldo_pessoal

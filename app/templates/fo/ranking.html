@@ -92,6 +92,23 @@
             </select>
         </div>
 
+        <div class="col-md-4">
+            <label class="form-label">Posto/Graduação</label>
+
+            <select name="posto_id" class="form-select">
+
+                <option value="">Todos</option>
+
+                {% for posto in postos %}
+                    <option value="{{ posto.id }}"
+                        {% if posto_id == posto.id %}selected{% endif %}>
+                        {{ posto.nome }}
+                    </option>
+                {% endfor %}
+
+            </select>
+        </div>
+
         <div class="col-md-4 d-flex align-items-end">
 
             <button class="btn btn-primary w-100">
