@@ -41,11 +41,43 @@
                 {% endif %}
                 </td>
                 <td class="text-end">
-                    <a href="{{ url_for('fo.admin_militar_editar', militar_id=militar.id) }}"
-                       class="btn btn-sm btn-warning">
-                        Editar
-                    </a>
-                </td>
+
+    <div class="d-flex justify-content-end gap-2">
+
+        <a href="{{ url_for('fo.admin_militar_editar', militar_id=militar.id) }}"
+           class="btn btn-sm btn-warning">
+            Editar
+        </a>
+
+        {% if militar.ativo %}
+
+        <form method="POST"
+              action="{{ url_for('fo.admin_militar_inativar', militar_id=militar.id) }}"
+              onsubmit="return confirm('Deseja realmente inativar este militar?');">
+
+            <button class="btn btn-sm btn-outline-danger">
+                Inativar
+            </button>
+
+        </form>
+
+        {% else %}
+
+        <form method="POST"
+              action="{{ url_for('fo.admin_militar_ativar', militar_id=militar.id) }}"
+              onsubmit="return confirm('Deseja ativar este militar?');">
+
+            <button class="btn btn-sm btn-outline-success">
+                Ativar
+            </button>
+
+        </form>
+
+        {% endif %}
+
+    </div>
+
+</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -14,7 +14,34 @@
 
     <style>
     body {
+        min-height: 100vh;
         background: #f4f6f9;
+    }
+
+    body.app-page {
+        background:
+            linear-gradient(rgba(244, 246, 249, 0.90), rgba(244, 246, 249, 0.90)),
+            url("{{ url_for('static', filename='img/login-bg.jpg') }}") center center / cover fixed no-repeat;
+    }
+
+    body.login-page {
+        background:
+            linear-gradient(rgba(0, 0, 0, 0.20), rgba(0, 0, 0, 0.35)),
+            url("{{ url_for('static', filename='img/login-bg.jpg') }}") center center / cover fixed no-repeat;
+    }
+
+    .login-page main.container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(6px);
+        border-radius: 18px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.28);
     }
 
     .navbar-custom {
@@ -54,6 +81,7 @@
         border-radius: 16px;
         border: none;
         box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        background: rgba(255, 255, 255, 0.94);
     }
 
     .positivo {
@@ -122,7 +150,9 @@
     {% block extra_head %}{% endblock %}
 
 </head>
-<body>
+<body class="{% if request.endpoint == 'auth.login' %}login-page{% else %}app-page{% endif %}">
+
+{% if request.endpoint != 'auth.login' %}
 
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 shadow-sm">
 
@@ -253,6 +283,8 @@
     </div>
 
 </nav>
+
+{% endif %}
 
 <div class="toast-container position-fixed top-0 end-0 p-3"
      style="z-index: 9999;">

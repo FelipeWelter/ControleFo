@@ -436,6 +436,50 @@ def admin_militar_editar(militar_id):
     )
 
 
+@fo_bp.route("/admin/militares/<int:militar_id>/ativar", methods=["POST"])
+@login_required
+@permissao_requerida("CADASTRADOR")
+def admin_militar_ativar(militar_id):
+    militar = Militar.query.get_or_404(militar_id)
+
+    militar.ativo = True
+
+    registrar_auditoria(
+        usuario=current_user,
+        acao="ATIVAR_MILITAR",
+        entidade="Militar",
+        entidade_id=militar.id,
+        detalhes=f"Militar ativado: {militar.nome_guerra}"
+    )
+
+    db.session.commit()
+
+    flash("Militar ativado com sucesso.", "success")
+    return redirect(url_for("fo.admin_militares"))
+
+
+@fo_bp.route("/admin/militares/<int:militar_id>/inativar", methods=["POST"])
+@login_required
+@permissao_requerida("CADASTRADOR")
+def admin_militar_inativar(militar_id):
+    militar = Militar.query.get_or_404(militar_id)
+
+    militar.ativo = False
+
+    registrar_auditoria(
+        usuario=current_user,
+        acao="INATIVAR_MILITAR",
+        entidade="Militar",
+        entidade_id=militar.id,
+        detalhes=f"Militar inativado: {militar.nome_guerra}"
+    )
+
+    db.session.commit()
+
+    flash("Militar inativado com sucesso.", "warning")
+    return redirect(url_for("fo.admin_militares"))
+
+
 # =========================
 # ADMIN - TIPOS DE FO
 # =========================

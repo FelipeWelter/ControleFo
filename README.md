@@ -1,23 +1,45 @@
-# Sistema FO - v1.0.1
+# Sistema FO - v1.4.1
 
-Sistema de gestão de Fatos Observados desenvolvido em Flask.
+Sistema web em Flask para controle de Fatos Observados.
 
 ## Funcionalidades
 
-- Login seguro com hash
-- Controle de permissões por perfil
+- Login com senha criptografada
+- Permissões múltiplas por usuário
+- Cadastro de militares
+- Ativação e inativação de militares
 - Lançamento de FO
 - Homologação
 - Ranking
-- Exportação BI
-- Administração de militares
-- Administração de usuários
-- Administração de tipos de FO
+- Histórico individual
+- Exportação para boletim
+- Auditoria administrativa
+- Dashboard operacional
+- Tratamento amigável de erros
 
-## Perfis
+## Permissões
 
-- ADMIN
-- HOMOLOGADOR
-- BOLETIM
+- USUARIO
+- LANCADOR
 - CADASTRADOR
-- MILITAR
+- BOLETIM
+- HOMOLOGADOR
+- ADMIN
+
+## Banco
+
+O banco SQLite `database.db` não deve ser versionado no GitHub.
+
+## Publicação
+
+Atualizar servidor:
+
+```bash
+cd ~/ControleFo
+sudo systemctl stop sistemafo
+git fetch origin
+git reset --hard origin/main
+source venv/bin/activate
+pip install -r requirements.txt
+flask --app run.py db upgrade
+sudo systemctl start sistemafo
