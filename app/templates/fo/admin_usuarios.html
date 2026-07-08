@@ -19,7 +19,8 @@
             <tr>
                 <th>Usuário</th>
                 <th>Militar Vinculado</th>
-                <th>Nível</th>
+                <th>Permissões</th>
+                <th>Escopo</th>
                 <th></th>
             </tr>
         </thead>
@@ -55,6 +56,21 @@
     {% endif %}
 {% endfor %}
                 </td>
+                <td>
+                    {% if usuario.nivel_acesso == 'BRIGADA' %}
+                        <span class="badge bg-dark">Brigada/Geral</span>
+                    {% elif usuario.nivel_acesso == 'COMPANHIA' %}
+                        <span class="badge bg-primary">Companhia</span>
+                        <div class="small text-muted">
+                            {{ usuario.companhia.nome if usuario.companhia else (usuario.militar.companhia.nome if usuario.militar and usuario.militar.companhia else 'sem companhia') }}
+                        </div>
+                    {% else %}
+                        <span class="badge bg-secondary">Seção/Pelotão</span>
+                        <div class="small text-muted">
+                            {{ usuario.secao_escopo.nome if usuario.secao_escopo else (usuario.militar.secao.nome if usuario.militar and usuario.militar.secao else 'sem seção') }}
+                        </div>
+                    {% endif %}
+                </td>
                 <td class="text-end">
                     <div class="d-flex justify-content-end gap-2">
                         <a href="{{ url_for('fo.admin_usuario_editar', usuario_id=usuario.id) }}"
@@ -73,17 +89,6 @@
                         </form>
                         {% endif %}
 
-                        {% if usuario.id != current_user.id %}
-                        <form method="POST"
-                            action="{{ url_for('fo.admin_usuario_excluir', usuario_id=usuario.id) }}"
-                            onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
-
-                            <button class="btn btn-sm btn-danger">
-                            Excluir
-                            </button>
-
-                        </form>
-                    {% endif %}
                     </div>
                 </td>
             </tr>

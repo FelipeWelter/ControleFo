@@ -56,8 +56,23 @@
                     required>
         </div>
 
+        <div class="mb-3">
+            <label class="form-label">Companhia</label>
+            <select name="id_companhia"
+                    class="form-select">
+                <option value="">Sem companhia</option>
+
+                {% for companhia in companhias %}
+                    <option value="{{ companhia.id }}"
+                        {% if militar and militar.id_companhia == companhia.id %}selected{% endif %}>
+                        {{ companhia.nome }}{% if companhia.sigla %} - {{ companhia.sigla }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
         <div class="mb-4">
-            <label class="form-label">Seção</label>
+            <label class="form-label">Seção/Pelotão</label>
             <select name="id_secao"
                     class="form-select">
                 <option value="">Selecione...</option>

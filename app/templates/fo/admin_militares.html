@@ -20,7 +20,8 @@
                 <th>Posto/Graduação</th>
                 <th>Nome de Guerra</th>
                 <th>Identidade</th>
-                <th>Seção</th>
+                <th>Companhia</th>
+                <th>Seção/Pelotão</th>
                 <th>Status</th>
                 <th></th>
             </tr>
@@ -32,6 +33,7 @@
                 <td>{{ militar.posto_graduacao.nome }}</td>
                 <td>{{ militar.nome_guerra }}</td>
                 <td>{{ militar.identidade_militar }}</td>
+                <td>{{ militar.companhia.nome if militar.companhia else "-" }}</td>
                 <td>{{ militar.secao.nome if militar.secao else "-" }}</td>
                 <td>
                 {% if militar.ativo %}

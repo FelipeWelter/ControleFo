@@ -33,16 +33,9 @@
                     </option>
                 {% endfor %}
             </select>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Pontuação do FO</label>
-
-            <input
-                type="text"
-                class="form-control"
-                id="pontuacao"
-                readonly
-            >
+            <small class="text-muted">
+                
+            </small>
         </div>
 
         <div class="mb-3">
@@ -71,7 +64,6 @@ const buscaInput = document.getElementById("busca-militar");
 const resultadoBusca = document.getElementById("resultado-busca");
 const militarIdInput = document.getElementById("militar_id");
 const tipoSelect = document.getElementById("tipo_fato_id");
-const pontuacaoInput = document.getElementById("pontuacao");
 const foCard = document.getElementById("fo-card");
 
 buscaInput.addEventListener("input", async () => {
@@ -103,24 +95,20 @@ buscaInput.addEventListener("input", async () => {
         };
 
         resultadoBusca.appendChild(item);
-    
     });
 });
 
 tipoSelect.addEventListener("change", async () => {
     const tipoId = tipoSelect.value;
+    foCard.classList.remove("positivo", "negativo");
 
     if(!tipoId){
-        pontuacaoInput.value = "";
         return;
     }
 
     const response = await fetch(`/fo/api/tipos/${tipoId}`);
     const tipo = await response.json();
 
-    pontuacaoInput.value = 1;
-
-    foCard.classList.remove("positivo", "negativo");
     if(tipo.sinal === "POSITIVO") {
         foCard.classList.add("positivo");
     } else {

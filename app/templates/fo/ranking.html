@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Ranking Geral{% endblock %}
+{% block title %}Painel de Conceitos da Tropa{% endblock %}
 
 {% block content %}
 
-<h2 class="mb-4">Ranking Geral da Tropa</h2>
+<h2 class="mb-4">Painel de Conceitos da Tropa</h2>
 
 <div class="row mb-4">
 
     <div class="col-md-4">
         <div class="card card-glass p-3">
-            <h6>Maior Pontuação</h6>
+            <h6>Maior Saldo</h6>
 
             {% if ranking %}
                 <h4>
@@ -18,7 +18,7 @@
                 </h4>
 
                 <p class="mb-0">
-                    {{ ranking[0].saldo }} pontos
+                    {{ ranking[0].saldo }} de saldo
                 </p>
             {% else %}
                 <p>Nenhum dado.</p>
@@ -73,8 +73,21 @@
             </select>
         </div>
 
-        <div class="col-md-4">
-            <label class="form-label">Seção</label>
+        <div class="col-md-3">
+            <label class="form-label">Companhia</label>
+            <select name="companhia_id" class="form-select">
+                <option value="">Todas</option>
+                {% for companhia in companhias %}
+                    <option value="{{ companhia.id }}"
+                        {% if companhia_id == companhia.id %}selected{% endif %}>
+                        {{ companhia.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Seção/Pelotão</label>
 
             <select name="secao_id" class="form-select">
 
@@ -92,7 +105,7 @@
             </select>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label">Posto/Graduação</label>
 
             <select name="posto_id" class="form-select">
@@ -109,7 +122,7 @@
             </select>
         </div>
 
-        <div class="col-md-4 d-flex align-items-end">
+        <div class="col-md-3 d-flex align-items-end">
 
             <button class="btn btn-primary w-100">
                 Filtrar

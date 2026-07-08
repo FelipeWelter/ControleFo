@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico Geral de FO{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>Histórico Geral de FO</h2>
+        <p class="text-muted mb-0">Consulta restrita a oficiais para conferência dos fatos publicados por militar.</p>
+    </div>
+</div>
+
+<div class="card card-glass p-4 mb-4">
+    <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Militar</label>
+            <select name="militar_id" class="form-select">
+                <option value="">Todos</option>
+                {% for militar in militares %}
+                <option value="{{ militar.id }}" {% if militar_id == militar.id %}selected{% endif %}>
+                    {{ militar.posto_graduacao.nome }} {{ militar.nome_guerra }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Companhia</label>
+            <select name="companhia_id" class="form-select">
+                <option value="">Todas</option>
+                {% for companhia in companhias %}
+                <option value="{{ companhia.id }}" {% if companhia_id == companhia.id %}selected{% endif %}>
+                    {{ companhia.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Seção/Pelotão</label>
+            <select name="secao_id" class="form-select">
+                <option value="">Todas</option>
+                {% for secao in secoes %}
+                <option value="{{ secao.id }}" {% if secao_id == secao.id %}selected{% endif %}>
+                    {{ secao.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Data inicial</label>
+            <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio or '' }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Data final</label>
+            <input type="date" name="data_fim" class="form-control" value="{{ data_fim or '' }}">
+        </div>
+
+        <div class="col-md-1 d-grid">
+            <button class="btn btn-primary">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="card card-glass p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Data do Fato</th>
+                    <th>Militar</th>
+                    <th>Companhia</th>
+                    <th>Seção/Pelotão</th>
+                    <th>Tipo</th>
+                    <th>Sinal</th>
+                    <th>Descrição</th>
+                    <th>Lançador</th>
+                    <th>Homologador</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fato in fatos %}
+                <tr>
+                    <td>{{ fato.data_registro.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ fato.militar.posto_graduacao.nome }} {{ fato.militar.nome_guerra }}</td>
+                    <td>{{ fato.militar.companhia.nome if fato.militar.companhia else '-' }}</td>
+                    <td>{{ fato.militar.secao.nome if fato.militar.secao else '-' }}</td>
+                    <td>{{ fato.tipo_fato.nome }}</td>
+                    <td>
+                        {% if fato.sinal == 'POSITIVO' %}
+                        <span class="badge bg-success">Positivo</span>
+                        {% else %}
+                        <span class="badge bg-danger">Negativo</span>
+                        {% endif %}
+                    </td>
+                    <td style="white-space: normal; min-width: 240px;">{{ fato.descricao or '-' }}</td>
+                    <td>{{ fato.cadastrador.militar.nome_guerra if fato.cadastrador and fato.cadastrador.militar else fato.cadastrador.username }}</td>
+                    <td>{{ fato.homologador.militar.nome_guerra if fato.homologador and fato.homologador.militar else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted">Nenhum FO publicado encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

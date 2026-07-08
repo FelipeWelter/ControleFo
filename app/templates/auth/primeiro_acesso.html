@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Primeiro Acesso{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card card-glass p-4">
+            <h2 class="mb-2">Primeiro Acesso</h2>
+            <p class="text-muted mb-4">
+                Para utilizar o Sistema FO, confirme sua identidade militar, defina sua nova senha e aceite os termos de uso.
+            </p>
+
+            <div class="alert alert-secondary small" style="max-height: 320px; overflow-y: auto;">
+                <h5 class="mb-3">Termos de Uso do Sistema FO</h5>
+
+                <p>
+                    O Sistema de Fatos Observados (Sistema FO) é uma aplicação institucional destinada ao
+                    registro, acompanhamento, homologação, consulta e controle dos Fatos Observados relacionados
+                    aos militares cadastrados.
+                </p>
+
+                <p>
+                    O acesso ao sistema é pessoal e intransferível. O usuário é responsável por manter sua senha
+                    em sigilo e por todas as ações realizadas com sua conta de acesso.
+                </p>
+
+                <p>
+                    As informações registradas devem ser verdadeiras, objetivas, respeitosas e compatíveis com a
+                    finalidade administrativa do sistema. É vedado utilizar o Sistema FO para inserir dados falsos,
+                    ofensivos, indevidos ou sem relação com as atividades funcionais.
+                </p>
+
+                <p>
+                    Os dados armazenados destinam-se exclusivamente ao uso interno da Organização Militar,
+                    observadas as normas administrativas, disciplinares e de segurança da informação aplicáveis.
+                </p>
+
+                <p>
+                    Todas as ações relevantes poderão ser registradas para fins de auditoria, rastreabilidade e
+                    controle administrativo.
+                </p>
+
+                <p class="mb-0">
+                    Ao aceitar estes termos, o usuário declara estar ciente das regras de utilização do sistema e
+                    concorda em utilizá-lo apenas para finalidades autorizadas.
+                </p>
+            </div>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Identidade Militar</label>
+                    <input type="text" name="identidade" class="form-control" required>
+                    <div class="form-text">Informe sua identidade militar para confirmar o primeiro acesso.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nova Senha</label>
+                    <input type="password" name="nova_senha" class="form-control" required>
+                    <div class="form-text">A senha deve possuir pelo menos 6 caracteres e ser diferente da senha inicial.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Confirmar Nova Senha</label>
+                    <input type="password" name="confirmar_senha" class="form-control" required>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" name="aceite_termos" id="aceite_termos" required>
+                    <label class="form-check-label" for="aceite_termos">
+                        Li e aceito os Termos de Uso do Sistema FO.
+                    </label>
+                </div>
+
+                <button class="btn btn-success">
+                    Confirmar Primeiro Acesso
+                </button>
+
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">
+                    Sair
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

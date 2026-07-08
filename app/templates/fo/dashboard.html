@@ -1,18 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Página Inicial{% endblock %}
 
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 
     <div>
-        <h2 class="mb-1">Dashboard</h2>
+        <h2 class="mb-1">Página Inicial</h2>
 
-        <small class="text-muted">
-            Bem-vindo, {{ current_user.username }}
-            | Permissões: {{ current_user.permissoes }}
-        </small>
+        <p class="mb-2 text-muted">
+            Bem-vindo,
+            {% if current_user.militar %}
+                {{ current_user.militar.posto_graduacao.nome }} {{ current_user.militar.nome_guerra }}
+            {% else %}
+                {{ current_user.username }}
+            {% endif %}
+        </p>
+
+        <div class="card border-0 bg-light p-3 mt-2">
+            <h6 class="mb-2">Perfis atribuídos</h6>
+            <div class="d-flex flex-wrap gap-3 small">
+                {% set permissoes = current_user.permissoes.split(',') if current_user.permissoes else [] %}
+                {% if "USUARIO" in permissoes %}<span>👤 Usuário</span>{% endif %}
+                {% if "LANCADOR" in permissoes %}<span>📝 Lançador</span>{% endif %}
+                {% if "CADASTRADOR" in permissoes %}<span>📋 Cadastrador</span>{% endif %}
+                {% if "BOLETIM" in permissoes %}<span>📰 Boletim</span>{% endif %}
+                {% if "HOMOLOGADOR" in permissoes %}<span>✔️ Homologador</span>{% endif %}
+                {% if "ADMIN" in permissoes %}<span>⚙️ Administrador</span>{% endif %}
+            </div>
+        </div>
     </div>
 
 </div>
@@ -51,7 +68,7 @@
 
     {% endif %}
 
-    {% if "BOLETIM" in current_user.permissoes %}
+    {% if "BOLETIM" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
 
     <div class="col-md-6">
         <div class="card card-glass p-3">
@@ -71,7 +88,7 @@
 
     {% endif %}
 
-    {% if "USUARIO" in current_user.permissoes or "LANCADOR" in current_user.permissoes %}
+    {% if usuario_tem_historico_pessoal(current_user) and ("USUARIO" in current_user.permissoes or "LANCADOR" in current_user.permissoes) %}
 
     <div class="col-md-4">
         <div class="card card-glass p-3">
@@ -219,8 +236,7 @@
                     <th>Data</th>
                     <th>Tipo</th>
                     <th>Sinal</th>
-                    <th>Pontos</th>
-                </tr>
+                    </tr>
             </thead>
 
             <tbody>
@@ -243,7 +259,6 @@
                         {% endif %}
                     </td>
 
-                    <td>{{ fato.pontos }}</td>
 
                 </tr>
 

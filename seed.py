@@ -11,6 +11,7 @@ from app.fo.models import (
     Secao,
     PostoGraduacao,
     TipoDeFato,
+    Companhia,
 )
 
 app = create_app()
@@ -55,6 +56,8 @@ with app.app_context():
         "2º Pelotão",
         "Subtenência",
         "Relações Públicas",
+        "Comandante",
+        "Subcomandante",
     ]
 
     for nome in secoes:
@@ -65,8 +68,24 @@ with app.app_context():
 
     db.session.commit()
 
+    # COMPANHIAS
+
+    companhias = [
+        {"nome": "Companhia de Comando", "sigla": "Cia Cmdo"},
+        {"nome": "1ª Companhia", "sigla": "1ª Cia"},
+        {"nome": "2ª Companhia", "sigla": "2ª Cia"},
+    ]
+
+    for item in companhias:
+        existente = Companhia.query.filter_by(nome=item["nome"]).first()
+        if not existente:
+            db.session.add(Companhia(**item))
+
+    db.session.commit()
+
     # BUSCAS
 
+    cia_cmdo = Companhia.query.filter_by(nome="Companhia de Comando").first()
     sargento = PostoGraduacao.query.filter_by(nome="3º Sargento").first()
     soldado = PostoGraduacao.query.filter_by(nome="Soldado").first()
     quarta_secao = Secao.query.filter_by(nome="4ª Seção").first()
@@ -83,6 +102,7 @@ with app.app_context():
             id_posto_graduacao=sargento.id,
             data_de_praca=date(2020, 3, 1),
             id_secao=quarta_secao.id,
+            id_companhia=cia_cmdo.id if cia_cmdo else None,
         )
 
         db.session.add(militar1)
@@ -98,6 +118,7 @@ with app.app_context():
             id_posto_graduacao=soldado.id,
             data_de_praca=date(2021, 5, 15),
             id_secao=quarta_secao.id,
+            id_companhia=cia_cmdo.id if cia_cmdo else None,
         )
 
         db.session.add(militar2)
@@ -113,6 +134,7 @@ with app.app_context():
             senha_hash=generate_password_hash("admin"),
             permissoes="ADMIN",
             militar_id=militar1.id,
+            nivel_acesso="BRIGADA",
         )
 
         db.session.add(usuario)
@@ -122,24 +144,24 @@ with app.app_context():
         {
             "nome": "Destaque positivo em missão",
             "sinal": "POSITIVO",
-            "pontos": 10,
+            "pontos": 1,
         },
 
         {
             "nome": "Boa Apresentação Individual",
             "sinal": "POSITIVO",
-            "pontos": 5,
+            "pontos": 1,
         },
         {
             "nome": "Atraso",
             "sinal": "NEGATIVO",
-            "pontos": 10,
+            "pontos": 1,
         },
 
         {
             "nome": "Falta",
             "sinal": "NEGATIVO",
-            "pontos": 20,
+            "pontos": 1,
         },
     ]
 

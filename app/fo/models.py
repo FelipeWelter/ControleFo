@@ -9,6 +9,18 @@ class PostoGraduacao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(80), nullable=False)
 
+class Companhia(db.Model):
+    __tablename__ = 'companhias'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False, unique=True)
+    sigla = db.Column(db.String(30), nullable=True)
+    ativa = db.Column(db.Boolean, default=True, nullable=False)
+
+    def __repr__(self):
+        return f"<Companhia {self.nome}>"
+
+
 class Secao(db.Model):
     __tablename__ = 'secoes'
 
@@ -35,12 +47,19 @@ class Militar(db.Model):
         nullable=False
     )
 
+    id_companhia = db.Column(
+        db.Integer,
+        db.ForeignKey("companhias.id", ondelete="RESTRICT"),
+        nullable=True
+    )
+
     foto_url = db.Column(db.String(255), nullable=True)
 
     ativo = db.Column(db.Boolean, default=True, nullable=False)
 
     posto_graduacao = db.relationship("PostoGraduacao")
     secao = db.relationship("Secao")
+    companhia = db.relationship("Companhia")
 
 class Usuario(db.Model, UserMixin):
     __tablename__ = "usuarios"
@@ -66,7 +85,25 @@ class Usuario(db.Model, UserMixin):
         nullable=True
     )
 
-    militar = db.relationship("Militar")
+    nivel_acesso = db.Column(db.String(20), default="SECAO", nullable=False)
+    primeiro_acesso = db.Column(db.Boolean, default=True, nullable=False)
+    aceitou_termos = db.Column(db.Boolean, default=False, nullable=False)
+    data_aceite_termos = db.Column(db.DateTime, nullable=True)
+
+    companhia_id = db.Column(
+        db.Integer,
+        db.ForeignKey("companhias.id", ondelete="SET NULL"),
+        nullable=True
+    )
+    secao_id = db.Column(
+        db.Integer,
+        db.ForeignKey("secoes.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
+    militar = db.relationship("Militar", foreign_keys=[militar_id])
+    companhia = db.relationship("Companhia", foreign_keys=[companhia_id])
+    secao_escopo = db.relationship("Secao", foreign_keys=[secao_id])
 
 class TipoDeFato(db.Model):
     __tablename__ = 'tipo_de_fato'
@@ -79,7 +116,7 @@ class TipoDeFato(db.Model):
     ativo = db.Column(db.Boolean, default=True, nullable=False)
 
     def __repr__(self):
-        return f"<TipoDeFato {self.nome} ({self.pontos})>"
+        return f"<TipoDeFato {self.nome} ({self.sinal})>"
 
 class FatoObservado(db.Model):
     __tablename__ = "fatos_observados"
@@ -151,6 +188,34 @@ class HistoricoEdicaoFO(db.Model):
 
     fato = db.relationship("FatoObservado")
     editor = db.relationship("Usuario")
+
+
+class DispensaMilitar(db.Model):
+    __tablename__ = "dispensas_militares"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    militar_id = db.Column(
+        db.Integer,
+        db.ForeignKey("militares.id", ondelete="RESTRICT"),
+        nullable=False
+    )
+
+    registrado_por_id = db.Column(
+        db.Integer,
+        db.ForeignKey("usuarios.id", ondelete="RESTRICT"),
+        nullable=False
+    )
+
+    tipo = db.Column(db.String(120), nullable=False)
+    data_inicio = db.Column(db.Date, nullable=False)
+    data_fim = db.Column(db.Date, nullable=False)
+    observacao = db.Column(db.Text, nullable=True)
+    ativo = db.Column(db.Boolean, default=True, nullable=False)
+    data_registro = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    militar = db.relationship("Militar")
+    registrado_por = db.relationship("Usuario")
 
 class Auditoria(db.Model):
     __tablename__ = "auditoria"

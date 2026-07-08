@@ -12,7 +12,7 @@
         <div class="card card-glass p-3">
             <h6>FOs Positivos</h6>
             <h3 class="text-success">{{ positivos|length }}</h3>
-            <p class="mb-0">{{ total_positivo }} ponto(s)</p>
+            <p class="mb-0">{{ total_positivo }} FO(s) positivo(s)</p>
         </div>
     </div>
 
@@ -20,7 +20,7 @@
         <div class="card card-glass p-3">
             <h6>FOs Negativos</h6>
             <h3 class="text-danger">{{ negativos|length }}</h3>
-            <p class="mb-0">{{ total_negativo }} ponto(s)</p>
+            <p class="mb-0">{{ total_negativo }} FO(s) negativo(s)</p>
         </div>
     </div>
 
@@ -53,7 +53,6 @@
                     <th>Data</th>
                     <th>Tipo</th>
                     <th>Sinal</th>
-                    <th>Pontos</th>
                     <th>Descrição</th>
                 </tr>
             </thead>
@@ -75,7 +74,6 @@
                         {% endif %}
                     </td>
 
-                    <td>{{ fato.pontos }}</td>
 
                     <td>{{ fato.descricao }}</td>
                 </tr>

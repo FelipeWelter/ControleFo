@@ -5,19 +5,27 @@ from app.extensions import db
 from app.fo.models import Militar
 from . import fo_bp
 from .models import TipoDeFato, FatoObservado
-from .models import Auditoria
+from .models import Auditoria, DispensaMilitar, Companhia
 from .auditoria import registrar_auditoria
 
 from .permissions import (
     requer_homologador,
     requer_admin,
     permissao_requerida,
-    requer_lancador
+    requer_lancador,
+    oficial_requerido,
+    aplicar_escopo_militares,
+    militar_no_escopo,
+    obter_permissoes,
+    tem_permissao,
+    companhia_escopo_id,
+    usuario_eh_admin,
+    usuario_tem_historico_pessoal
 )
 from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_fato
 from flask import Response
 from werkzeug.security import generate_password_hash
-from .models import Usuario, Militar, PostoGraduacao, Secao, TipoDeFato
+from .models import Usuario, Militar, PostoGraduacao, Secao, TipoDeFato, Companhia
 from datetime import datetime
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
@@ -30,6 +38,10 @@ def novo_fo():
         descricao = request.form.get("descricao", "")
 
         militar = Militar.query.get_or_404(militar_id)
+        if not militar_no_escopo(current_user, militar):
+            flash("Militar fora do seu nível de acesso.", "danger")
+            return redirect(url_for("fo.novo_fo"))
+
         tipo_fato = TipoDeFato.query.filter_by(id=tipo_fato_id, ativo=True).first_or_404()
 
         fato = criar_fato_observado(
@@ -55,13 +67,15 @@ def api_buscar_militares():
     if len(termo) < 2:
         return jsonify([])
 
-    militares = Militar.query.filter(
+    query = Militar.query.filter(
         Militar.ativo == True,
         or_(
             Militar.nome_guerra.ilike(f"%{termo}%"),
             Militar.identidade_militar.ilike(f"%{termo}%")
         )
-    ).limit(10).all()
+    )
+    query = aplicar_escopo_militares(query, current_user, Militar)
+    militares = query.limit(10).all()
 
     return jsonify([
         {
@@ -83,17 +97,18 @@ def api_tipo_fato(tipo_id):
     return jsonify({
         "id": tipo.id,
         "nome": tipo.nome,
-        "sinal": tipo.sinal,
-        "pontos": 1
+        "sinal": tipo.sinal
     })
 
 @fo_bp.route("/homologacao")
 @login_required
 @requer_homologador
 def homologacao():
-    fatos = FatoObservado.query.filter_by(status="Pendente")\
-        .order_by(FatoObservado.data_registro.desc())\
-        .all()
+    query = FatoObservado.query.join(Militar, FatoObservado.militar_id == Militar.id).filter(
+        FatoObservado.status == "Pendente"
+    )
+    query = aplicar_escopo_militares(query, current_user, Militar)
+    fatos = query.order_by(FatoObservado.data_registro.desc()).all()
 
     total_pendente = len(fatos)
 
@@ -108,6 +123,9 @@ def homologacao():
 @requer_homologador
 def aprovar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
+    if not militar_no_escopo(current_user, fato.militar):
+        flash("FO fora do seu nível de acesso.", "danger")
+        return redirect(url_for("fo.homologacao"))
 
     if fato.status != "Pendente":
         abort(400, description="Apenas FOs pendentes podem ser aprovados.")
@@ -121,6 +139,9 @@ def aprovar(fato_id):
 @requer_homologador
 def recusar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
+    if not militar_no_escopo(current_user, fato.militar):
+        flash("FO fora do seu nível de acesso.", "danger")
+        return redirect(url_for("fo.homologacao"))
 
     if fato.status != "Pendente":
         abort(400, description="Apenas FOs pendentes podem ser recusados.")
@@ -136,6 +157,9 @@ def recusar(fato_id):
 @requer_homologador
 def editar(fato_id):
     fato = FatoObservado.query.get_or_404(fato_id)
+    if not militar_no_escopo(current_user, fato.militar):
+        flash("FO fora do seu nível de acesso.", "danger")
+        return redirect(url_for("fo.homologacao"))
 
     if request.method == "POST":
         nova_descricao = request.form.get("descricao", "")
@@ -147,9 +171,11 @@ def editar(fato_id):
 
 @fo_bp.route("/ranking")
 @login_required
+@oficial_requerido
 def ranking():
     periodo = request.args.get("periodo", "mes")
     secao_id = request.args.get("secao_id", type=int)
+    companhia_id = request.args.get("companhia_id", type=int)
     posto_id = request.args.get("posto_id", type=int)
 
     query = db.session.query(
@@ -160,16 +186,16 @@ def ranking():
         Militar.data_de_praca.label("data_de_praca"),
         func.sum(
             case(
-                (FatoObservado.sinal == "POSITIVO", FatoObservado.pontos),
+                (FatoObservado.sinal == "POSITIVO", 1),
                 else_=0
             )
-        ).label("pontos_positivos"),
+        ).label("fos_positivos"),
         func.sum(
             case(
-                (FatoObservado.sinal == "NEGATIVO", FatoObservado.pontos),
+                (FatoObservado.sinal == "NEGATIVO", 1),
                 else_=0
             )
-        ).label("pontos_negativos")
+        ).label("fos_negativos")
     ).join(
         FatoObservado,
         FatoObservado.militar_id == Militar.id
@@ -186,6 +212,8 @@ def ranking():
     if posto_id:
         query = query.filter(Militar.id_posto_graduacao == posto_id)
 
+    query = aplicar_escopo_militares(query, current_user, Militar)
+
     query = query.group_by(
         Militar.id,
         Militar.nome_guerra,
@@ -199,8 +227,8 @@ def ranking():
     ranking_lista = []
 
     for item in resultados:
-        positivos = item.pontos_positivos or 0
-        negativos = item.pontos_negativos or 0
+        positivos = item.fos_positivos or 0
+        negativos = item.fos_negativos or 0
         saldo = positivos - negativos
 
         if saldo > 10:
@@ -238,6 +266,7 @@ def ranking():
     )
 
     secoes = Secao.query.order_by(Secao.nome.asc()).all()
+    companhias = Companhia.query.filter_by(ativa=True).order_by(Companhia.nome.asc()).all()
     postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
     return render_template(
         "fo/ranking.html",
@@ -251,18 +280,28 @@ def ranking():
 
 @fo_bp.route("/exportar-bi", methods=["POST"])
 @login_required
-@permissao_requerida("BOLETIM", "HOMOLOGADOR")
 def exportar_bi():
+    if not tem_permissao(current_user, "BOLETIM"):
+        abort(403)
+
     ids = request.form.getlist("fo_ids")
 
     if not ids:
         flash("Nenhum FO selecionado para exportação.", "warning")
         return redirect(url_for("fo.exportacao"))
 
-    fatos = FatoObservado.query.filter(
+    query = FatoObservado.query.join(Militar, FatoObservado.militar_id == Militar.id).filter(
         FatoObservado.id.in_(ids),
         FatoObservado.status == "Publicado"
-    ).order_by(FatoObservado.data_registro.asc()).all()
+    )
+    if not usuario_eh_admin(current_user):
+        companhia_id = companhia_escopo_id(current_user)
+        if companhia_id:
+            query = query.filter(Militar.id_companhia == companhia_id)
+        else:
+            query = query.filter(False)
+
+    fatos = query.order_by(FatoObservado.data_registro.asc()).all()
 
     linhas = []
 
@@ -298,14 +337,22 @@ def exportar_bi():
 
 @fo_bp.route("/exportacao")
 @login_required
-@permissao_requerida("BOLETIM")
 def exportacao():
+    if not tem_permissao(current_user, "BOLETIM"):
+        abort(403)
 
-    fatos = FatoObservado.query.filter_by(
-        status="Publicado"
-    ).order_by(
-        FatoObservado.data_registro.desc()
-    ).all()
+    query = FatoObservado.query.join(Militar, FatoObservado.militar_id == Militar.id).filter(
+        FatoObservado.status == "Publicado"
+    )
+
+    if not usuario_eh_admin(current_user):
+        companhia_id = companhia_escopo_id(current_user)
+        if companhia_id:
+            query = query.filter(Militar.id_companhia == companhia_id)
+        else:
+            query = query.filter(False)
+
+    fatos = query.order_by(FatoObservado.data_registro.desc()).all()
 
     return render_template(
         "fo/exportacao.html",
@@ -320,7 +367,9 @@ def exportacao():
 @login_required
 @permissao_requerida("CADASTRADOR")
 def admin_militares():
-    militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
+    query = Militar.query.order_by(Militar.nome_guerra.asc())
+    query = aplicar_escopo_militares(query, current_user, Militar)
+    militares = query.all()
     return render_template("fo/admin_militares.html", militares=militares)
 
 
@@ -330,6 +379,7 @@ def admin_militares():
 def admin_militar_novo():
     postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
     secoes = Secao.query.order_by(Secao.nome.asc()).all()
+    companhias = Companhia.query.filter_by(ativa=True).order_by(Companhia.nome.asc()).all()
 
     if request.method == "POST":
         identidade = request.form.get("identidade_militar")
@@ -350,8 +400,13 @@ def admin_militar_novo():
                 request.form.get("data_de_praca"),
                 "%Y-%m-%d"
             ).date(),
-            id_secao=request.form.get("id_secao", type=int)
+            id_secao=request.form.get("id_secao", type=int),
+            id_companhia=request.form.get("id_companhia", type=int)
         )
+
+        if not militar_no_escopo(current_user, militar):
+            flash("Você só pode cadastrar militares dentro do seu nível de acesso.", "danger")
+            return redirect(url_for("fo.admin_militar_novo"))
 
         db.session.add(militar)
         db.session.flush()  # Para garantir que o ID seja gerado antes de criar o usuário
@@ -381,7 +436,8 @@ def admin_militar_novo():
         "fo/admin_militar_form.html",
         militar=None,
         postos=postos,
-        secoes=secoes
+        secoes=secoes,
+        companhias=companhias
     )
 
 @fo_bp.route("/admin/militares/<int:militar_id>/editar", methods=["GET", "POST"])
@@ -391,6 +447,11 @@ def admin_militar_editar(militar_id):
     militar = Militar.query.get_or_404(militar_id)
     postos = PostoGraduacao.query.order_by(PostoGraduacao.id.asc()).all()
     secoes = Secao.query.order_by(Secao.nome.asc()).all()
+    companhias = Companhia.query.filter_by(ativa=True).order_by(Companhia.nome.asc()).all()
+
+    if not militar_no_escopo(current_user, militar):
+        flash("Militar fora do seu nível de acesso.", "danger")
+        return redirect(url_for("fo.admin_militares"))
 
     if request.method == "POST":
         
@@ -407,6 +468,7 @@ def admin_militar_editar(militar_id):
         ).date()
 
         militar.id_secao = request.form.get("id_secao", type=int)
+        militar.id_companhia = request.form.get("id_companhia", type=int)
 
         usuario_vinculado = Usuario.query.filter_by(
             militar_id=militar.id
@@ -432,7 +494,8 @@ def admin_militar_editar(militar_id):
         "fo/admin_militar_form.html",
         militar=militar,
         postos=postos,
-        secoes=secoes
+        secoes=secoes,
+        companhias=companhias
     )
 
 
@@ -441,6 +504,9 @@ def admin_militar_editar(militar_id):
 @permissao_requerida("CADASTRADOR")
 def admin_militar_ativar(militar_id):
     militar = Militar.query.get_or_404(militar_id)
+    if not militar_no_escopo(current_user, militar):
+        flash("Militar fora do seu nível de acesso.", "danger")
+        return redirect(url_for("fo.admin_militares"))
 
     militar.ativo = True
 
@@ -463,6 +529,9 @@ def admin_militar_ativar(militar_id):
 @permissao_requerida("CADASTRADOR")
 def admin_militar_inativar(militar_id):
     militar = Militar.query.get_or_404(militar_id)
+    if not militar_no_escopo(current_user, militar):
+        flash("Militar fora do seu nível de acesso.", "danger")
+        return redirect(url_for("fo.admin_militares"))
 
     militar.ativo = False
 
@@ -535,6 +604,75 @@ def admin_tipo_editar(tipo_id):
     return render_template("fo/admin_tipo_form.html", tipo=tipo)
 
 
+
+
+# =========================
+# ADMIN - COMPANHIAS
+# =========================
+
+@fo_bp.route("/admin/companhias")
+@login_required
+@permissao_requerida("ADMIN")
+def admin_companhias():
+    companhias = Companhia.query.order_by(Companhia.nome.asc()).all()
+    return render_template("fo/admin_companhias.html", companhias=companhias)
+
+
+@fo_bp.route("/admin/companhias/novo", methods=["GET", "POST"])
+@login_required
+@permissao_requerida("ADMIN")
+def admin_companhia_nova():
+    if request.method == "POST":
+        companhia = Companhia(
+            nome=request.form.get("nome"),
+            sigla=request.form.get("sigla"),
+            ativa=True if request.form.get("ativa") == "on" else False
+        )
+
+        db.session.add(companhia)
+        db.session.flush()
+
+        registrar_auditoria(
+            usuario=current_user,
+            acao="CADASTRAR_COMPANHIA",
+            entidade="Companhia",
+            entidade_id=companhia.id,
+            detalhes=f"Companhia cadastrada: {companhia.nome}"
+        )
+
+        db.session.commit()
+        flash("Companhia cadastrada com sucesso.", "success")
+        return redirect(url_for("fo.admin_companhias"))
+
+    return render_template("fo/admin_companhia_form.html", companhia=None)
+
+
+@fo_bp.route("/admin/companhias/<int:companhia_id>/editar", methods=["GET", "POST"])
+@login_required
+@permissao_requerida("ADMIN")
+def admin_companhia_editar(companhia_id):
+    companhia = Companhia.query.get_or_404(companhia_id)
+
+    if request.method == "POST":
+        companhia.nome = request.form.get("nome")
+        companhia.sigla = request.form.get("sigla")
+        companhia.ativa = True if request.form.get("ativa") == "on" else False
+
+        registrar_auditoria(
+            usuario=current_user,
+            acao="EDITAR_COMPANHIA",
+            entidade="Companhia",
+            entidade_id=companhia.id,
+            detalhes=f"Companhia atualizada: {companhia.nome}"
+        )
+
+        db.session.commit()
+        flash("Companhia atualizada com sucesso.", "success")
+        return redirect(url_for("fo.admin_companhias"))
+
+    return render_template("fo/admin_companhia_form.html", companhia=companhia)
+
+
 # =========================
 # ADMIN - USUÁRIOS
 # =========================
@@ -552,13 +690,18 @@ def admin_usuarios():
 @permissao_requerida("ADMIN")
 def admin_usuario_novo():
     militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
+    companhias = Companhia.query.filter_by(ativa=True).order_by(Companhia.nome.asc()).all()
+    secoes = Secao.query.order_by(Secao.nome.asc()).all()
 
     if request.method == "POST":
         usuario = Usuario(
             username=request.form.get("username"),
             senha_hash=generate_password_hash(request.form.get("senha")),
             permissoes=",".join(request.form.getlist("permissoes")),
-            militar_id=request.form.get("militar_id", type=int)
+            militar_id=request.form.get("militar_id", type=int),
+            nivel_acesso=request.form.get("nivel_acesso") or "SECAO",
+            companhia_id=request.form.get("companhia_id", type=int),
+            secao_id=request.form.get("secao_id", type=int)
         )
 
         db.session.add(usuario)
@@ -570,7 +713,9 @@ def admin_usuario_novo():
     return render_template(
         "fo/admin_usuario_form.html",
         usuario=None,
-        militares=militares
+        militares=militares,
+        companhias=companhias,
+        secoes=secoes
     )
 
 
@@ -580,11 +725,16 @@ def admin_usuario_novo():
 def admin_usuario_editar(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
     militares = Militar.query.order_by(Militar.nome_guerra.asc()).all()
+    companhias = Companhia.query.filter_by(ativa=True).order_by(Companhia.nome.asc()).all()
+    secoes = Secao.query.order_by(Secao.nome.asc()).all()
 
     if request.method == "POST":
         usuario.username = request.form.get("username")
         usuario.permissoes = ",".join(request.form.getlist("permissoes"))
         usuario.militar_id = request.form.get("militar_id", type=int)
+        usuario.nivel_acesso = request.form.get("nivel_acesso") or "SECAO"
+        usuario.companhia_id = request.form.get("companhia_id", type=int)
+        usuario.secao_id = request.form.get("secao_id", type=int)
 
         nova_senha = request.form.get("senha")
 
@@ -599,12 +749,18 @@ def admin_usuario_editar(usuario_id):
     return render_template(
         "fo/admin_usuario_form.html",
         usuario=usuario,
-        militares=militares
+        militares=militares,
+        companhias=companhias,
+        secoes=secoes
     )
 
 @fo_bp.route("/meu-historico")
 @login_required
 def meu_historico():
+    if not usuario_tem_historico_pessoal(current_user):
+        flash("Este usuário não possui histórico pessoal de FO.", "warning")
+        return redirect(url_for("fo.dashboard"))
+
     if not current_user.militar_id:
         flash("Seu usuário não está vinculado a um militar.", "warning")
         return redirect(url_for("auth.logout"))
@@ -619,8 +775,8 @@ def meu_historico():
     positivos = [f for f in fatos if f.sinal == "POSITIVO"]
     negativos = [f for f in fatos if f.sinal == "NEGATIVO"]
 
-    total_positivo = sum(f.pontos for f in positivos)
-    total_negativo = sum(f.pontos for f in negativos)
+    total_positivo = len(positivos)
+    total_negativo = len(negativos)
     saldo = total_positivo - total_negativo
 
     return render_template(
@@ -646,6 +802,9 @@ def admin_usuario_resetar_senha(usuario_id):
     usuario.senha_hash = generate_password_hash(
         usuario.militar.identidade_militar
     )
+    usuario.primeiro_acesso = True
+    usuario.aceitou_termos = False
+    usuario.data_aceite_termos = None
 
     registrar_auditoria(
         usuario=current_user,
@@ -665,43 +824,196 @@ def admin_usuario_resetar_senha(usuario_id):
 @login_required
 @permissao_requerida("ADMIN")
 def admin_usuario_excluir(usuario_id):
-    usuario = Usuario.query.get_or_404(usuario_id)
-
-    if usuario.id == current_user.id:
-        flash("Você não pode excluir o próprio usuário logado.", "danger")
-        return redirect(url_for("fo.admin_usuarios"))
-
-    db.session.delete(usuario)
-    db.session.commit()
-
-    flash("Usuário excluído com sucesso.", "success")
+    flash("A exclusão de usuários foi desativada. Use edição, reset de senha ou inativação do militar vinculado.", "warning")
     return redirect(url_for("fo.admin_usuarios"))
+
+
+# =========================
+# OFICIAIS - HISTÓRICO GERAL DE FO
+# =========================
+
+@fo_bp.route("/historico-geral")
+@login_required
+@oficial_requerido
+def historico_geral():
+    militar_id = request.args.get("militar_id", type=int)
+    secao_id = request.args.get("secao_id", type=int)
+    companhia_id = request.args.get("companhia_id", type=int)
+    data_inicio = request.args.get("data_inicio")
+    data_fim = request.args.get("data_fim")
+
+    query = FatoObservado.query.join(Militar, FatoObservado.militar_id == Militar.id).filter(
+        FatoObservado.status == "Publicado"
+    )
+
+    if militar_id:
+        query = query.filter(FatoObservado.militar_id == militar_id)
+
+    if secao_id:
+        query = query.filter(Militar.id_secao == secao_id)
+
+    if companhia_id:
+        query = query.filter(Militar.id_companhia == companhia_id)
+
+    query = aplicar_escopo_militares(query, current_user, Militar)
+
+    if data_inicio:
+        query = query.filter(FatoObservado.data_registro >= datetime.strptime(data_inicio, "%Y-%m-%d"))
+
+    if data_fim:
+        fim = datetime.strptime(data_fim, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+        query = query.filter(FatoObservado.data_registro <= fim)
+
+    fatos = query.order_by(
+        Militar.nome_guerra.asc(),
+        FatoObservado.data_registro.desc()
+    ).all()
+
+    militares_query = Militar.query.filter_by(ativo=True).order_by(Militar.nome_guerra.asc())
+    militares_query = aplicar_escopo_militares(militares_query, current_user, Militar)
+    militares = militares_query.all()
+    secoes = Secao.query.order_by(Secao.nome.asc()).all()
+    companhias = Companhia.query.filter_by(ativa=True).order_by(Companhia.nome.asc()).all()
+
+    return render_template(
+        "fo/historico_geral.html",
+        fatos=fatos,
+        militares=militares,
+        secoes=secoes,
+        companhias=companhias,
+        militar_id=militar_id,
+        secao_id=secao_id,
+        companhia_id=companhia_id,
+        data_inicio=data_inicio,
+        data_fim=data_fim
+    )
+
+
+# =========================
+# OFICIAIS - DISPENSAS
+# =========================
+
+@fo_bp.route("/dispensas", methods=["GET", "POST"])
+@login_required
+@oficial_requerido
+def dispensas():
+    if request.method == "POST":
+        militar_id = request.form.get("militar_id", type=int)
+        data_inicio = datetime.strptime(request.form.get("data_inicio"), "%Y-%m-%d").date()
+        data_fim = datetime.strptime(request.form.get("data_fim"), "%Y-%m-%d").date()
+
+        if data_fim < data_inicio:
+            flash("A data final da dispensa não pode ser anterior à data inicial.", "danger")
+            return redirect(url_for("fo.dispensas"))
+
+        militar = Militar.query.get_or_404(militar_id)
+        if not militar_no_escopo(current_user, militar):
+            flash("Militar fora do seu nível de acesso.", "danger")
+            return redirect(url_for("fo.dispensas"))
+
+        dispensa = DispensaMilitar(
+            militar_id=militar_id,
+            registrado_por_id=current_user.id,
+            tipo=request.form.get("tipo"),
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            observacao=request.form.get("observacao"),
+            ativo=True if request.form.get("ativo") == "on" else False
+        )
+
+        db.session.add(dispensa)
+        db.session.flush()
+
+        registrar_auditoria(
+            usuario=current_user,
+            acao="CADASTRAR_DISPENSA",
+            entidade="DispensaMilitar",
+            entidade_id=dispensa.id,
+            detalhes=f"Dispensa cadastrada para militar ID {militar_id}"
+        )
+
+        db.session.commit()
+        flash("Dispensa cadastrada com sucesso.", "success")
+        return redirect(url_for("fo.dispensas"))
+
+    militar_id = request.args.get("militar_id", type=int)
+    somente_ativas = request.args.get("ativas", "1")
+
+    query = DispensaMilitar.query.join(Militar, DispensaMilitar.militar_id == Militar.id)
+    query = aplicar_escopo_militares(query, current_user, Militar)
+
+    if militar_id:
+        query = query.filter(DispensaMilitar.militar_id == militar_id)
+
+    if somente_ativas == "1":
+        query = query.filter(DispensaMilitar.ativo == True)
+
+    dispensas = query.order_by(DispensaMilitar.data_inicio.desc()).all()
+    militares_query = Militar.query.filter_by(ativo=True).order_by(Militar.nome_guerra.asc())
+    militares_query = aplicar_escopo_militares(militares_query, current_user, Militar)
+    militares = militares_query.all()
+
+    return render_template(
+        "fo/dispensas.html",
+        dispensas=dispensas,
+        militares=militares,
+        militar_id=militar_id,
+        somente_ativas=somente_ativas
+    )
+
+
+@fo_bp.route("/dispensas/<int:dispensa_id>/inativar", methods=["POST"])
+@login_required
+@oficial_requerido
+def dispensa_inativar(dispensa_id):
+    dispensa = DispensaMilitar.query.get_or_404(dispensa_id)
+    if not militar_no_escopo(current_user, dispensa.militar):
+        flash("Dispensa fora do seu nível de acesso.", "danger")
+        return redirect(url_for("fo.dispensas"))
+
+    dispensa.ativo = False
+
+    registrar_auditoria(
+        usuario=current_user,
+        acao="INATIVAR_DISPENSA",
+        entidade="DispensaMilitar",
+        entidade_id=dispensa.id,
+        detalhes=f"Dispensa inativada para {dispensa.militar.nome_guerra}"
+    )
+
+    db.session.commit()
+    flash("Dispensa inativada com sucesso.", "warning")
+    return redirect(url_for("fo.dispensas"))
 
 @fo_bp.route("/dashboard")
 @login_required
 def dashboard():
 
-    total_militares = Militar.query.count()
+    militares_query = aplicar_escopo_militares(Militar.query, current_user, Militar)
+    total_militares = militares_query.count()
 
-    pendentes = FatoObservado.query.filter_by(
-        status="Pendente"
+    fatos_base = FatoObservado.query.join(Militar, FatoObservado.militar_id == Militar.id)
+    fatos_base = aplicar_escopo_militares(fatos_base, current_user, Militar)
+
+    pendentes = fatos_base.filter(
+        FatoObservado.status == "Pendente"
     ).count()
 
-    publicados = FatoObservado.query.filter_by(
-        status="Publicado"
+    publicados = fatos_base.filter(
+        FatoObservado.status == "Publicado"
     ).count()
 
-    total_positivos = FatoObservado.query.filter_by(
-        status="Publicado",
-        sinal="POSITIVO"
+    total_positivos = fatos_base.filter(
+        FatoObservado.status == "Publicado",
+        FatoObservado.sinal == "POSITIVO"
     ).count()
 
-    total_negativos = FatoObservado.query.filter_by(
-        status="Publicado",
-        sinal="NEGATIVO"
+    total_negativos = fatos_base.filter(
+        FatoObservado.status == "Publicado",
+        FatoObservado.sinal == "NEGATIVO"
     ).count()
 
-    ultimos_fos = FatoObservado.query.filter(
+    ultimos_fos = fatos_base.filter(
         FatoObservado.status != "Recusado"
     ).order_by(
         FatoObservado.data_registro.desc()
@@ -710,7 +1022,7 @@ def dashboard():
     meus_fos = []
     saldo_pessoal = 0
 
-    if current_user.militar_id:
+    if usuario_tem_historico_pessoal(current_user):
         meus_fos = FatoObservado.query.filter_by(
             militar_id=current_user.militar_id,
             status="Publicado"
@@ -718,8 +1030,8 @@ def dashboard():
             FatoObservado.data_registro.desc()
         ).limit(5).all()
 
-        positivos = sum(f.pontos for f in meus_fos if f.sinal == "POSITIVO")
-        negativos = sum(f.pontos for f in meus_fos if f.sinal == "NEGATIVO")
+        positivos = sum(1 for f in meus_fos if f.sinal == "POSITIVO")
+        negativos = sum(1 for f in meus_fos if f.sinal == "NEGATIVO")
         saldo_pessoal = positivos - negativos
 
     return render_template(

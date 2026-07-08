@@ -1,7 +1,8 @@
-from flask import Flask, redirect, url_for, render_template
+from flask import Flask, redirect, url_for, render_template, request
 from config import Config
 from app.extensions import db, login_manager, migrate
 from flask_login import current_user
+from datetime import datetime
 
 def create_app():
     app = Flask(__name__)
@@ -12,12 +13,41 @@ def create_app():
     migrate.init_app(app, db)
 
     from app.fo.models import Usuario
+    from app.fo.permissions import tem_acesso_oficial, usuario_tem_historico_pessoal
 
     @login_manager.user_loader
     def load_user(user_id):
         return Usuario.query.get(int(user_id))
 
     login_manager.login_view = "auth.login"
+
+    @app.before_request
+    def exigir_primeiro_acesso():
+        if not current_user.is_authenticated:
+            return None
+
+        endpoints_liberados = {
+            "auth.login",
+            "auth.logout",
+            "auth.primeiro_acesso",
+            "static",
+        }
+
+        if request.endpoint in endpoints_liberados or (request.endpoint or "").startswith("static"):
+            return None
+
+        if getattr(current_user, "primeiro_acesso", False) or not getattr(current_user, "aceitou_termos", False):
+            return redirect(url_for("auth.primeiro_acesso"))
+
+        return None
+
+    @app.context_processor
+    def inject_permissions_helpers():
+        return {
+            "tem_acesso_oficial": tem_acesso_oficial,
+            "usuario_tem_historico_pessoal": usuario_tem_historico_pessoal,
+            "current_year": datetime.now().year
+        }
 
     from app.fo import fo_bp
     app.register_blueprint(fo_bp)

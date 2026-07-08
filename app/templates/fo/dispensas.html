@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Controle de Dispensas{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>Controle de Dispensas</h2>
+        <p class="text-muted mb-0">Área restrita a oficiais para registrar e acompanhar dispensas dos militares.</p>
+    </div>
+</div>
+
+<div class="card card-glass p-4 mb-4">
+    <h5 class="mb-3">Nova Dispensa</h5>
+
+    <form method="POST" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Militar</label>
+            <select name="militar_id" class="form-select" required>
+                <option value="">Selecione</option>
+                {% for militar in militares %}
+                <option value="{{ militar.id }}">
+                    {{ militar.posto_graduacao.nome }} {{ militar.nome_guerra }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Tipo</label>
+            <input type="text" name="tipo" class="form-control" placeholder="Ex: Médica, Serviço" required>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Início</label>
+            <input type="date" name="data_inicio" class="form-control" required>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Fim</label>
+            <input type="date" name="data_fim" class="form-control" required>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="ativo" id="ativo" checked>
+                <label class="form-check-label" for="ativo">Ativa</label>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Observação</label>
+            <textarea name="observacao" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="col-12 text-end">
+            <button class="btn btn-success">Salvar Dispensa</button>
+        </div>
+    </form>
+</div>
+
+<div class="card card-glass p-4 mb-4">
+    <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label">Filtrar militar</label>
+            <select name="militar_id" class="form-select">
+                <option value="">Todos</option>
+                {% for militar in militares %}
+                <option value="{{ militar.id }}" {% if militar_id == militar.id %}selected{% endif %}>
+                    {{ militar.posto_graduacao.nome }} {{ militar.nome_guerra }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Situação</label>
+            <select name="ativas" class="form-select">
+                <option value="1" {% if somente_ativas == '1' %}selected{% endif %}>Somente ativas</option>
+                <option value="0" {% if somente_ativas == '0' %}selected{% endif %}>Todas</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-grid">
+            <button class="btn btn-primary">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="card card-glass p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Militar</th>
+                    <th>Tipo</th>
+                    <th>Período</th>
+                    <th>Situação</th>
+                    <th>Observação</th>
+                    <th>Registrado por</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dispensa in dispensas %}
+                <tr>
+                    <td>{{ dispensa.militar.posto_graduacao.nome }} {{ dispensa.militar.nome_guerra }}</td>
+                    <td>{{ dispensa.tipo }}</td>
+                    <td>{{ dispensa.data_inicio.strftime('%d/%m/%Y') }} a {{ dispensa.data_fim.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        {% if dispensa.ativo %}
+                        <span class="badge bg-success">Ativa</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td style="white-space: normal; min-width: 220px;">{{ dispensa.observacao or '-' }}</td>
+                    <td>{{ dispensa.registrado_por.militar.nome_guerra if dispensa.registrado_por and dispensa.registrado_por.militar else dispensa.registrado_por.username }}</td>
+                    <td class="text-end">
+                        {% if dispensa.ativo %}
+                        <form method="POST" action="{{ url_for('fo.dispensa_inativar', dispensa_id=dispensa.id) }}" onsubmit="return confirm('Inativar esta dispensa?');">
+                            <button class="btn btn-sm btn-warning">Inativar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Nenhuma dispensa encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

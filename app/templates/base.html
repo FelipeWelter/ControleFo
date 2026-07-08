@@ -92,6 +92,18 @@
         border-left: 6px solid #dc3545;
     }
 
+    .system-footer {
+        font-size: 0.78rem;
+        color: rgba(0, 0, 0, 0.58);
+        text-align: center;
+        padding: 18px 10px 12px;
+    }
+
+    .login-page .system-footer {
+        color: rgba(255, 255, 255, 0.88);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+    }
+
     @media (max-width: 991px) {
         .navbar-custom .nav-link {
             padding: 0.75rem 0;
@@ -184,11 +196,11 @@
 
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.dashboard') }}">
-                        Dashboard
+                        Página Inicial
                     </a>
                 </li>
 
-                {% if "USUARIO" in current_user.permissoes or "LANCADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
+                {% if usuario_tem_historico_pessoal(current_user) and ("USUARIO" in current_user.permissoes or "LANCADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes) %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.meu_historico') }}">
                         Meu Histórico
@@ -199,7 +211,7 @@
                 {% if "LANCADOR" in current_user.permissoes or "HOMOLOGADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.novo_fo') }}">
-                        Novo FO
+                        Lançar FO
                     </a>
                 </li>
                 {% endif %}
@@ -212,15 +224,27 @@
                 </li>
                 {% endif %}
 
-                {% if "USUARIO" in current_user.permissoes or "LANCADOR" in current_user.permissoes or "HOMOLOGADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
+                {% if tem_acesso_oficial(current_user) %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.ranking') }}">
-                        Ranking
+                        Painel de Conceitos
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('fo.historico_geral') }}">
+                        Histórico Geral
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('fo.dispensas') }}">
+                        Dispensas
                     </a>
                 </li>
                 {% endif %}
 
-                {% if "BOLETIM" in current_user.permissoes or "HOMOLOGADOR" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
+                {% if "BOLETIM" in current_user.permissoes or "ADMIN" in current_user.permissoes %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.exportacao') }}">
                         Exportação BI
@@ -240,6 +264,12 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('fo.admin_tipos') }}">
                         Tipos
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('fo.admin_companhias') }}">
+                        Companhias
                     </a>
                 </li>
 
@@ -333,6 +363,10 @@
 <main class="container">
     {% block content %}{% endblock %}
 </main>
+
+<footer class="system-footer">
+    © 2026 Desenvolvido por 3º Sgt Ribeiro. Todos os direitos reservados.
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% block extra_scripts %}{% endblock %}
