@@ -1,7 +1,8 @@
 from flask import render_template, request, redirect, url_for, flash, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from app.auth import auth_bp
-from app.fo.models import Usuario, SolicitacaoResetSenha
+from app.fo.models import Usuario
+from app.auth.models import SolicitacaoResetSenha
 from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.extensions import db
