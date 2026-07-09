@@ -88,8 +88,8 @@ with app.app_context():
     # COMPANHIAS
     companhias = [
         {"nome": "Companhia de Comando", "sigla": "Cia Cmdo"},
-        {"nome": "1ª Companhia", "sigla": "1ª Cia"},
-        {"nome": "2ª Companhia", "sigla": "2ª Cia"},
+        {"nome": "6ª Companhia de Comunicações Mecanizada", "sigla": "6ª Cia Com Mec"},
+        {"nome": "23º Pelotão de Policia do Exército", "sigla": "23º Pel PE"},
     ]
 
     for item in companhias:
@@ -98,17 +98,17 @@ with app.app_context():
     db.session.commit()
 
     terceiro_sargento = PostoGraduacao.query.filter_by(nome="3º Sargento").first()
-    quarta_secao = Secao.query.filter_by(nome="4ª Seção").first()
-    cia_cmdo = Companhia.query.filter_by(nome="Companhia de Comando").first()
+    cia_com_mec = Companhia.query.filter_by(nome="6ª Companhia de Comunicações Mecanizada").first()
+    primeiro_pelotao = Secao.query.filter_by(nome="1º Pelotão").first()
 
     # MILITAR ADMINISTRADOR PADRÃO
     militar_admin = Militar(
         nome_guerra="Ribeiro",
         identidade_militar="1115565978",
         id_posto_graduacao=terceiro_sargento.id,
-        data_de_praca=date(2020, 3, 20),
-        id_secao=quarta_secao.id,
-        id_companhia=cia_cmdo.id if cia_cmdo else None,
+        data_de_praca=date(2020, 3, 1),
+        id_secao=primeiro_pelotao.id,
+        id_companhia=cia_com_mec.id if cia_com_mec else None,
         ativo=True,
     )
 
@@ -123,8 +123,8 @@ with app.app_context():
         permissoes="USUARIO,LANCADOR,CADASTRADOR,BOLETIM,HOMOLOGADOR,ADMIN",
         militar_id=militar_admin.id,
         nivel_acesso="BRIGADA",
-        companhia_id=cia_cmdo.id if cia_cmdo else None,
-        secao_id=quarta_secao.id if quarta_secao else None,
+        companhia_id=cia_com_mec.id if cia_com_mec else None,
+        secao_id=primeiro_pelotao.id if primeiro_pelotao else None,
         primeiro_acesso=False,
         aceitou_termos=True,
         data_aceite_termos=datetime.utcnow(),
@@ -135,7 +135,7 @@ with app.app_context():
     # Usuário técnico reserva, para manutenção do sistema.
     usuario_tecnico = Usuario(
         username="admin",
-        senha_hash=generate_password_hash("admin"),
+        senha_hash=generate_password_hash("frsW2803@"),
         permissoes="ADMIN",
         militar_id=None,
         nivel_acesso="BRIGADA",
@@ -168,4 +168,4 @@ with app.app_context():
     print("")
     print("Conta técnica reserva:")
     print("Login: admin")
-    print("Senha: admin")
+    print("Senha: frsW2803@")
