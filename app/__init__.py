@@ -13,7 +13,7 @@ def create_app():
     migrate.init_app(app, db)
 
     from app.fo.models import Usuario
-    from app.fo.permissions import tem_acesso_oficial, usuario_tem_historico_pessoal
+    from app.fo.permissions import tem_acesso_oficial, usuario_tem_historico_pessoal, tem_permissao
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -34,6 +34,11 @@ def create_app():
         }
 
         if request.endpoint in endpoints_liberados or (request.endpoint or "").startswith("static"):
+            return None
+
+        # Contas com perfil ADMIN são contas de administração/manutenção.
+        # Elas não devem ficar presas no fluxo de primeiro acesso, especialmente após reset do banco.
+        if tem_permissao(current_user, "ADMIN"):
             return None
 
         if getattr(current_user, "primeiro_acesso", False) or not getattr(current_user, "aceitou_termos", False):
