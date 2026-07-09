@@ -40,7 +40,7 @@ class Militar(db.Model):
         nullable=False
     )
 
-    data_de_praca = db.Column(db.Date, nullable=False)
+    data_de_praca = db.Column(db.Date, nullable=True)
     id_secao = db.Column(
         db.Integer,
         db.ForeignKey("secoes.id", ondelete="RESTRICT"),

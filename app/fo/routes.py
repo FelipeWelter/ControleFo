@@ -392,16 +392,21 @@ def admin_militar_novo():
             flash("Já existe um militar cadastrado com essa identidade militar.", "danger")
             return redirect(url_for("fo.admin_militar_novo"))
 
+
+        data_de_praca = None
+        if request.form.get("data_de_praca"):
+                data_de_praca=datetime.strptime(
+                    request.form.get("data_de_praca"),
+                    "%Y-%m-%d"
+                ).date()
+
         militar = Militar(
             nome_guerra=request.form.get("nome_guerra"),
             identidade_militar=identidade,
             id_posto_graduacao=request.form.get("id_posto_graduacao", type=int),
-            data_de_praca=datetime.strptime(
-                request.form.get("data_de_praca"),
-                "%Y-%m-%d"
-            ).date(),
+            data_de_praca=data_de_praca,
             id_secao=request.form.get("id_secao", type=int),
-            id_companhia=request.form.get("id_companhia", type=int)
+            id_companhia=request.form.get("id_companhia", type=int),
         )
 
         if not militar_no_escopo(current_user, militar):
