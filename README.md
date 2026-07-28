@@ -42,6 +42,37 @@ Sistema web em Flask para controle de Fatos Observados.
 
 O banco SQLite `database.db` não deve ser versionado no GitHub.
 
+## Execução com Docker Compose
+
+Crie o arquivo local de configuração e defina uma `SECRET_KEY` forte:
+
+```bash
+cp .env.example .env
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Edite o valor de `SECRET_KEY` no arquivo `.env` e suba a aplicação:
+
+```bash
+docker compose up -d --build
+```
+
+As migrações são aplicadas automaticamente na inicialização. No primeiro uso,
+carregue os dados iniciais e acesse `http://localhost:5000`:
+
+```bash
+docker compose exec app python seed.py
+```
+
+O banco SQLite fica armazenado no volume nomeado `controlefo_data`, permanecendo
+disponível mesmo quando o contêiner é recriado. Para acompanhar a aplicação ou
+encerrá-la, use:
+
+```bash
+docker compose logs -f app
+docker compose down
+```
+
 ## Publicação
 
 Atualizar servidor:
