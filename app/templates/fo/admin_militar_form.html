@@ -26,8 +26,7 @@
             <input type="text"
                    name="identidade_militar"
                    class="form-control"
-                   value="{{ militar.identidade_militar if militar else '' }}"
-                   required>
+                   value="{{ militar.identidade_militar if militar and militar.identidade_militar else '' }}">
         </div>
 
         <div class="mb-3">

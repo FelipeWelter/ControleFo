@@ -32,7 +32,7 @@ class Militar(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nome_guerra = db.Column(db.String(120), nullable=False)
-    identidade_militar = db.Column(db.String(30), unique=True, nullable=False)
+    identidade_militar = db.Column(db.String(30), unique=True, nullable=True)
 
     id_posto_graduacao = db.Column(
         db.Integer,

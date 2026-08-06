@@ -26,7 +26,7 @@ from .services import criar_fato_observado, aprovar_fato, recusar_fato, editar_f
 from flask import Response
 from werkzeug.security import generate_password_hash
 from .models import Usuario, Militar, PostoGraduacao, Secao, TipoDeFato, Companhia
-from datetime import datetime
+from datetime import datetime, date
 
 @fo_bp.route("/novo", methods=["GET", "POST"])
 @login_required
@@ -261,7 +261,7 @@ def ranking():
         key=lambda x: (
             -x["saldo"],
             x["id_posto_graduacao"],
-            x["data_de_praca"]
+            x["data_de_praca"] or date.max
         )
     )
 
@@ -382,15 +382,16 @@ def admin_militar_novo():
     companhias = Companhia.query.filter_by(ativa=True).order_by(Companhia.nome.asc()).all()
 
     if request.method == "POST":
-        identidade = request.form.get("identidade_militar")
+        identidade = request.form.get("identidade_militar", "").strip() or None
 
-        militar_existente = Militar.query.filter_by(
-            identidade_militar=identidade
-        ).first()
+        if identidade:
+            militar_existente = Militar.query.filter_by(
+                identidade_militar=identidade
+            ).first()
 
-        if militar_existente:
-            flash("Já existe um militar cadastrado com essa identidade militar.", "danger")
-            return redirect(url_for("fo.admin_militar_novo"))
+            if militar_existente:
+                flash("Já existe um militar cadastrado com essa identidade militar.", "danger")
+                return redirect(url_for("fo.admin_militar_novo"))
 
 
         data_de_praca = None
@@ -423,18 +424,21 @@ def admin_militar_novo():
             entidade_id=militar.id,
             detalhes=f"Militar cadastrado: {militar.nome_guerra}"
         )
+        if identidade:
+            usuario = Usuario(
+                username=identidade,
+                senha_hash=generate_password_hash(identidade),
+                permissoes="USUARIO",
+                militar_id=militar.id
+            )
 
-        usuario = Usuario(
-            username=identidade,
-            senha_hash=generate_password_hash(identidade),
-            permissoes="USUARIO",
-            militar_id=militar.id
-        )
-
-        db.session.add(usuario)
+            db.session.add(usuario)
         db.session.commit()
 
-        flash("Militar e usuário associados cadastrados com sucesso.", "success")
+        if identidade:
+            flash("Militar e usuário associados cadastrados com sucesso.", "success")
+        else:
+            flash("Militar cadastrado sem usuário de acesso.", "success")
         return redirect(url_for("fo.admin_militares"))
 
     return render_template(
@@ -461,16 +465,33 @@ def admin_militar_editar(militar_id):
     if request.method == "POST":
         
         identidade_antiga = militar.identidade_militar
-        nova_identidade = request.form.get("identidade_militar")
+        nova_identidade = request.form.get("identidade_militar", "").strip() or None
+
+        if nova_identidade:
+            militar_com_mesma_identidade = Militar.query.filter(
+                Militar.identidade_militar == nova_identidade,
+                Militar.id != militar.id
+            ).first()
+
+            if militar_com_mesma_identidade:
+                flash("Já existe outro militar com essa identidade militar.", "danger")
+                return redirect(
+                    url_for(
+                        "fo.admin_militar_editar",
+                        militar_id=militar.id
+                    )
+                )
         militar.nome_guerra = request.form.get("nome_guerra")
         militar.identidade_militar = nova_identidade
         militar.id_posto_graduacao = request.form.get("id_posto_graduacao", type=int)
         militar.ativo = True if request.form.get("ativo") == "on" else False
         
-        militar.data_de_praca = datetime.strptime(
-            request.form.get("data_de_praca"),
-            "%Y-%m-%d"
-        ).date()
+        data_de_praca_texto = request.form.get("data_de_praca", "").strip()
+        militar.data_de_praca = (
+            datetime.strptime(data_de_praca_texto, "%Y-%m-%d").date()
+            if data_de_praca_texto
+            else None
+        )
 
         militar.id_secao = request.form.get("id_secao", type=int)
         militar.id_companhia = request.form.get("id_companhia", type=int)
@@ -479,7 +500,11 @@ def admin_militar_editar(militar_id):
             militar_id=militar.id
         ).first()
 
-        if usuario_vinculado and usuario_vinculado.username == identidade_antiga:
+        if (
+            usuario_vinculado
+            and nova_identidade
+            and usuario_vinculado.username == identidade_antiga
+        ):
             usuario_vinculado.username = nova_identidade
 
         registrar_auditoria(
@@ -802,6 +827,13 @@ def admin_usuario_resetar_senha(usuario_id):
 
     if not usuario.militar:
         flash("Este usuário não possui militar vinculado.", "warning")
+        return redirect(url_for("fo.admin_usuarios"))
+
+    if not usuario.militar.identidade_militar:
+        flash(
+            "O militar vinculado não possui identidade militar. Defina uma senha manualmente na edição do usuário.",
+            "warning"
+        )
         return redirect(url_for("fo.admin_usuarios"))
 
     usuario.senha_hash = generate_password_hash(
